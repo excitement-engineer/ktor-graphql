@@ -1,6 +1,7 @@
-group 'com.github.excitement-engineer'
-version '0.1.0'
+def versionNo = '0.1.0'
 
+group 'com.github.excitement-engineer'
+version versionNo
 
 buildscript {
     ext.kotlin_version = '1.2.60'
@@ -59,19 +60,21 @@ publishing {
 }
 
 bintray {
-    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    user = System.getProperty('bintray.user')
+    key = System.getProperty('bintray.key')
 
     pkg {
-        repo = 'Maven'
+        repo = 'ktor-graphql'
         name = 'ktor-graphql'
         licenses = ['MIT']
+        vcsUrl = "https://github.com/excitement-engineer/ktor-graphql.git"
         publications = ['MyPublication']
 
         version {
-            name = '0.1.0'
+            name = versionNo
             desc = 'GraphQL over HTTP for Ktor'
             released  = new Date()
+            vcsTag = versionNo
         }
     }
 }
