@@ -22,7 +22,9 @@ And then you can run
 ./gradlew bintrayUpload
 ```
 
-Make sure to tag a release in git and update the release notes on Github.
+Make sure to publish the release on bintray, it will initially be set as "unpublished".
+
+Make sure to tag a release in git and update the release notes on Github. 
 
 Once published, add [release notes](https://github.com/excitement-engineer/ktor-graphql/tags).
 
