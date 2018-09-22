@@ -30,7 +30,6 @@ fun Application.GraphiQL() {
 
 class TestGraphiQL {
 
-
     @Test
     fun `does not renders GraphiQL if no opt-in`() = withTestApplication(Application::testGraphQLRoute) {
         with(handleRequest {
@@ -243,6 +242,18 @@ class TestGraphiQL {
         with(handleRequest {
             uri = urlString(Pair("query", "{test}"))
             addHeader(HttpHeaders.Accept, "unknown")
+            method = HttpMethod.Get
+        }) {
+            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
+            assertEquals(expected = "application/json; charset=UTF-8", actual = response.contentType().toString())
+            assertEquals(expected = "{\"data\":{\"test\":\"Hello World\"}}", actual = response.content)
+        }
+    }
+
+    @Test
+    fun `prefers JSON if no header is specified`() = withTestApplication(Application::GraphiQL) {
+        with(handleRequest {
+            uri = urlString(Pair("query", "{test}"))
             method = HttpMethod.Get
         }) {
             assertEquals(expected = HttpStatusCode.OK, actual = response.status())

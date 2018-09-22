@@ -208,6 +208,17 @@ internal class RequestHandler(
             // prefers HTML over JSON.
             val htmlText =  HeaderValue("text/html")
             val isRawRequest = call.parameters["raw"] != null
-            return !isRawRequest && call.request.acceptItems()[0] == htmlText
+
+            if (isRawRequest) {
+                return false
+            }
+
+            val acceptItems = call.request.acceptItems()
+
+            if (acceptItems.isEmpty()) {
+                return false
+            }
+
+            return acceptItems[0] == htmlText
         }
 }
