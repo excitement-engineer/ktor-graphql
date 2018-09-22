@@ -6,7 +6,20 @@ then bump the version in the `build.gradle` according to [semantic versioning](h
 Next, publish a release to Bintray using the following command:
 
 ```
-./gradlew bintrayUpload -Dbintray.user=<YOUR_USER_NAME> -Dbintray.key=<YOUR_API_KEY>
+./gradlew bintrayUpload -DBINTRAY_USER=<YOUR_USER_NAME> -DBINTRAY_API_KEY=<YOUR_API_KEY>
+```
+
+Alternatively you can create a `gradle.properties` file and specify the following properties: 
+
+```
+bintrayUser=<YOUR_USER_NAME>
+bintrayApiKey=<YOUR_API_KEY>
+```
+
+And then you can run
+
+```
+./gradlew bintrayUpload
 ```
 
 Make sure to tag a release in git and update the release notes on Github.
