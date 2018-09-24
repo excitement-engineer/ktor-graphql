@@ -75,9 +75,8 @@ class ErrorHandlingTest {
     @Test
     fun `allows for custom error formatting to sanitize`() = withTestApplication {
         application.routing {
-            route(urlString()) {
 
-                graphQL(schema) {
+                graphQL(urlString(), schema) {
                     config {
                         context = "hello"
                         formatError = {
@@ -92,7 +91,6 @@ class ErrorHandlingTest {
                         }
                     }
                 }
-            }
         }
 
         with(handleRequest {
@@ -118,8 +116,7 @@ class ErrorHandlingTest {
     @Test
     fun `allows for custom error formatting to elaborate`() = withTestApplication {
         application.routing {
-            route(urlString()) {
-                graphQL(schema) {
+                graphQL(urlString(), schema) {
                     config {
                         formatError = {
                             mapOf(
@@ -130,7 +127,7 @@ class ErrorHandlingTest {
                         }
                     }
                 }
-            }
+
         }
 
         with(handleRequest {
@@ -321,15 +318,14 @@ class ErrorHandlingTest {
     @Test
     fun `allows for custom error formatting of poorly formed requests`() = withTestApplication {
         application.routing {
-            route(urlString()) {
-                graphQL(schema) {
+                graphQL(urlString(), schema) {
                     config {
                         formatError = {
                             mapOf(Pair("message", "Custom error format: ${this.message}"))
                         }
                     }
                 }
-            }
+
         }
         with(handleRequest {
             uri = urlString(

@@ -236,14 +236,11 @@ class GraphQLRouteGetTest {
     @Test
     fun `allows passing in a context`() = withTestApplication {
         application.routing {
-            route(urlString()) {
-                graphQL(schema) {
+                graphQL(urlString(), schema) {
                     config {
                         context = "testValue"
                     }
                 }
-
-            }
         }
         with(handleRequest {
             uri = urlString(
@@ -272,14 +269,11 @@ class GraphQLRouteGetTest {
     @Test
     fun `allows passing in a root value`() = withTestApplication {
         application.routing {
-            route(urlString()) {
-                graphQL(schema) {
+                graphQL(urlString(), schema) {
                     config {
                         rootValue = "testValue"
                     }
                 }
-
-            }
         }
         with(handleRequest {
             uri = urlString(
@@ -310,14 +304,13 @@ class GraphQLRouteGetTest {
         var requestInSetupFn: GraphQLRequest? = null
 
         application.routing {
-            route(urlString()) {
-                graphQL(schema) { request ->
+                graphQL(urlString(), schema) { request ->
                     requestInSetupFn = request
                     config {
                         context = "testValue"
                     }
                 }
-            }
+
         }
 
         with(handleRequest {
@@ -336,11 +329,10 @@ class GraphQLRouteGetTest {
     @Test
     fun `it catches errors thrown from the setup function`() = withTestApplication {
         application.routing {
-            route(urlString()) {
-                graphQL(schema) {
+                graphQL(urlString(), schema) {
                     throw Exception("Something went wrong")
                 }
-            }
+
         }
 
         with(handleRequest {
