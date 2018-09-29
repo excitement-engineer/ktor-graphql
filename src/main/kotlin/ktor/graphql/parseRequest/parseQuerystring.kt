@@ -8,7 +8,7 @@ import ktor.graphql.HttpException
 import ktor.graphql.HttpGraphQLError
 import ktor.graphql.mapper
 
-internal fun parseQueststring(params: Parameters): GraphQLRequest {
+internal fun parseQueryString(params: Parameters): GraphQLRequest {
     val query = params["query"]
     val operationName = operationNameFromParams(params)
     val variables = variablesFromParams(params)
