@@ -6,7 +6,6 @@ import com.coxautodev.graphql.tools.SchemaParser
 import graphQLRoute.urlString
 import graphql.schema.DataFetchingEnvironment
 import io.ktor.application.Application
-import io.ktor.routing.route
 import io.ktor.routing.routing
 
 
@@ -57,8 +56,6 @@ class Mutation: GraphQLMutationResolver {
 
 fun Application.testGraphQLRoute() {
     routing {
-        route(urlString()) {
-            graphQL(schema)
-        }
+        graphQL(urlString(), schema)
     }
 }

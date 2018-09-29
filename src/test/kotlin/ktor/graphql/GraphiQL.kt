@@ -16,13 +16,12 @@ import kotlin.test.assertTrue
 
 fun Application.GraphiQL() {
     routing {
-        route(urlString()) {
-            graphQL(schema) {
+            graphQL(urlString(), schema) {
                config {
                    graphiql = true
                }
             }
-        }
+
     }
 }
 
