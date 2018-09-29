@@ -25,7 +25,6 @@ class GraphQLRoutePostTest {
             addHeader(HttpHeaders.ContentType, "application/json")
             method = HttpMethod.Post
         }) {
-            print(response.content)
             assertEquals(expected = HttpStatusCode.OK, actual = response.status())
 
         }
@@ -43,7 +42,6 @@ class GraphQLRoutePostTest {
             method = HttpMethod.Post
             addHeader(HttpHeaders.ContentType, "application/json")
         }) {
-            println(response.content)
             assertEquals(expected = HttpStatusCode.OK, actual = response.status())
             assertEquals(
                     expected = removeWhitespace("""
@@ -106,7 +104,6 @@ class GraphQLRoutePostTest {
             method = HttpMethod.Post
 
         }) {
-            println(response.content)
             assertEquals(expected = HttpStatusCode.OK, actual = response.status())
             assertEquals(
                     expected = removeWhitespace("""
