@@ -2,11 +2,11 @@ package ktor.graphql
 
 import graphql.schema.GraphQLSchema
 import io.ktor.application.ApplicationCall
-import io.ktor.pipeline.PipelineContext
 import io.ktor.routing.Route
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
+import io.ktor.util.pipeline.PipelineContext
 
 fun Route.graphQL(
     path: String,

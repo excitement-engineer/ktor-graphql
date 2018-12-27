@@ -13,11 +13,11 @@ import io.ktor.http.ContentType
 import io.ktor.http.HeaderValue
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.pipeline.PipelineContext
 import io.ktor.request.acceptItems
 import io.ktor.request.httpMethod
 import io.ktor.response.header
 import io.ktor.response.respondText
+import io.ktor.util.pipeline.PipelineContext
 import ktor.graphql.parseRequest.parseGraphQLRequest
 
 internal class RequestHandler(
