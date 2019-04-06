@@ -214,13 +214,19 @@ internal class RequestHandler(
             // Allowed to show GraphiQL if not requested as raw and this request
             // prefers HTML over JSON.
             val htmlText =  HeaderValue("text/html")
+            val jsonText = HeaderValue("application/json")
+
             val isRawRequest = call.parameters["raw"] != null
 
             if (isRawRequest) {
                 return false
             }
 
-            val acceptItems = call.request.acceptItems()
+            val acceptItems = call.request
+                    .acceptItems()
+                    .filter {
+                        it == htmlText || it == jsonText
+                    }
 
             if (acceptItems.isEmpty()) {
                 return false
