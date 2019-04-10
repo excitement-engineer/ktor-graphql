@@ -8,7 +8,9 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.routing.route
 import io.ktor.routing.routing
+import io.ktor.server.testing.TestApplicationCall
 import io.ktor.server.testing.withTestApplication
+import kotlinx.coroutines.*
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -236,11 +238,11 @@ class GraphQLRouteGetTest {
     @Test
     fun `allows passing in a context`() = withTestApplication {
         application.routing {
-                graphQL(urlString(), schema) {
-                    config {
-                        context = "testValue"
-                    }
+            graphQL(urlString(), schema) {
+                config {
+                    context = "testValue"
                 }
+            }
         }
         with(handleRequest {
             uri = urlString(
@@ -269,11 +271,11 @@ class GraphQLRouteGetTest {
     @Test
     fun `allows passing in a root value`() = withTestApplication {
         application.routing {
-                graphQL(urlString(), schema) {
-                    config {
-                        rootValue = "testValue"
-                    }
+            graphQL(urlString(), schema) {
+                config {
+                    rootValue = "testValue"
                 }
+            }
         }
         with(handleRequest {
             uri = urlString(
@@ -304,12 +306,12 @@ class GraphQLRouteGetTest {
         var requestInSetupFn: GraphQLRequest? = null
 
         application.routing {
-                graphQL(urlString(), schema) { request ->
-                    requestInSetupFn = request
-                    config {
-                        context = "testValue"
-                    }
+            graphQL(urlString(), schema) { request ->
+                requestInSetupFn = request
+                config {
+                    context = "testValue"
                 }
+            }
 
         }
 
@@ -329,9 +331,9 @@ class GraphQLRouteGetTest {
     @Test
     fun `it catches errors thrown from the setup function`() = withTestApplication {
         application.routing {
-                graphQL(urlString(), schema) {
-                    throw Exception("Something went wrong")
-                }
+            graphQL(urlString(), schema) {
+                throw Exception("Something went wrong")
+            }
 
         }
 
@@ -346,5 +348,29 @@ class GraphQLRouteGetTest {
                 }
                 """), actual = response.content)
         }
+    }
+
+    @Test
+    fun `it allows for performing multiple requests that are slow simultaneously`() = withTestApplication(Application::testGraphQLRoute) {
+
+        fun TestApplicationCall.assert() {
+//            assertEquals(expected = io.ktor.http.HttpStatusCode.OK, actual = response.status())
+            assertEquals(expected = "{\"data\":{\"slow\":\"hello\"}}", actual = response.content)
+        }
+
+        runBlocking {
+            val deferred = (0 until 2).map {
+                GlobalScope.async {
+                    handleRequest {
+                        uri = urlString(Pair("query", "{ slow }"))
+                        method = HttpMethod.Get
+                    }
+                }
+
+            }
+
+            deferred.awaitAll().forEach { it.assert() }
+        }
+
     }
 }

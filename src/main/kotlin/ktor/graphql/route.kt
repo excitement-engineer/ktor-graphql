@@ -14,9 +14,8 @@ fun Route.graphQL(
     setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> GraphQLRouteConfig)? = null
 ): Route {
 
-    val requestHandler = RequestHandler(schema, setup)
-
     val graphQLRoute: suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit = {
+        val requestHandler = RequestHandler(schema, setup)
         requestHandler.doRequest(this)
     }
 

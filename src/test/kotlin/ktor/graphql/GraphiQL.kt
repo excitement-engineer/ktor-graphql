@@ -9,6 +9,7 @@ import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.server.testing.contentType
 import io.ktor.server.testing.withTestApplication
+import io.netty.handler.codec.http.HttpHeaders.addHeader
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -271,6 +272,19 @@ class TestGraphiQL {
             assertEquals(expected = HttpStatusCode.OK, actual = response.status())
             assertEquals(expected = "application/json; charset=UTF-8", actual = response.contentType().toString())
             assertEquals(expected = "{\"data\":{\"test\":\"Hello World\"}}", actual = response.content)
+        }
+    }
+
+    @Test
+    fun `prefers html even if the first accept header is different`() = withTestApplication(Application::GraphiQL) {
+        with(handleRequest {
+            uri = urlString(Pair("query", "{test}"))
+            addHeader(HttpHeaders.Accept, "image/jpeg,text/html,application/json")
+            method = HttpMethod.Get
+        }) {
+            kotlin.test.assertEquals(expected = io.ktor.http.HttpStatusCode.OK, actual = response.status())
+            kotlin.test.assertEquals(expected = "text/html; charset=UTF-8", actual = response.contentType().toString())
+            ktor.graphql.assertContains(response.content!!, "graphiql.min.js")
         }
     }
 }

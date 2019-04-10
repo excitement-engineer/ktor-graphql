@@ -18,6 +18,7 @@ type Query {
     thrower: String
     context: String
     rootValue: String
+    slow: String
 }
 
 type Mutation {
@@ -45,6 +46,13 @@ class Query: GraphQLQueryResolver {
     }
     fun context(env: DataFetchingEnvironment): String {
         return env.getContext()
+    }
+
+    fun slow(): String {
+
+        Thread.sleep(100)
+
+        return "hello"
     }
 
     fun rootValue(env: DataFetchingEnvironment): String = env.getRoot()
