@@ -1,7 +1,5 @@
 package ktor.graphql
 
-import graphQLRoute.removeWhitespace
-import graphQLRoute.urlString
 import io.ktor.application.Application
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod

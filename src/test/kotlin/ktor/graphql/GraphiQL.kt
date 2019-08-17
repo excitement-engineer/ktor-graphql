@@ -1,19 +1,14 @@
 package ktor.graphql
 
-import graphQLRoute.urlString
 import io.ktor.application.Application
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.server.testing.contentType
 import io.ktor.server.testing.withTestApplication
-import io.netty.handler.codec.http.HttpHeaders.addHeader
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 fun Application.GraphiQL() {
     routing {
@@ -110,7 +105,6 @@ class TestGraphiQL {
 
             assertContains(content, "response: JSON.stringify({\"data\":{\"b\":\"Hello World\"}}, null, 2)")
             assertContains(content, "operationName: \"B\"")
-
         }
     }
 
@@ -289,33 +283,3 @@ class TestGraphiQL {
     }
 }
 
-
-fun assertContains(actual: String, containing: String) {
-    val containsMessage =
-         """
-        Expected:
-        $actual
-
-        To contain:
-        $containing
-        """
-
-
-
-    assertTrue(actual.contains(containing), containsMessage)
-}
-
-fun assertDoesntContains(actual: String, containing: String) {
-    val containsMessage =
-            """
-        Expected:
-        $actual
-
-        Not to contain:
-        $containing
-        """
-
-
-
-    assertFalse(actual.contains(containing), containsMessage)
-}

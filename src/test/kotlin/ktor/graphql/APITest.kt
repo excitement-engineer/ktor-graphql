@@ -1,9 +1,5 @@
 package ktor.graphql
 
-import graphQLRoute.getRequest
-import graphQLRoute.testGraphQLServer
-import graphQLRoute.testResponse
-import graphQLRoute.urlString
 import io.ktor.server.testing.withTestApplication
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async

@@ -1,4 +1,4 @@
-package graphQLRoute
+package ktor.graphql
 
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
@@ -7,13 +7,12 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.formUrlEncode
 import io.ktor.routing.routing
-import io.ktor.server.testing.TestApplicationCall
-import io.ktor.server.testing.TestApplicationEngine
-import io.ktor.server.testing.TestApplicationRequest
-import io.ktor.server.testing.withTestApplication
+import io.ktor.server.testing.*
 import io.ktor.util.pipeline.PipelineContext
-import ktor.graphql.*
 import org.spekframework.spek2.style.specification.Suite
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.test.expect
 
 /**
@@ -26,7 +25,7 @@ fun removeWhitespace(text: String): String {
 fun urlString(vararg queryParams: Pair<String, String>): String {
     var route = "/graphql"
     if (queryParams.isNotEmpty()) {
-        route +="?${queryParams.toList().formUrlEncode()}"
+        route += "?${queryParams.toList().formUrlEncode()}"
     }
     return route
 }
@@ -66,16 +65,64 @@ fun TestApplicationEngine.testGraphQLServer(
 fun Suite.testResponse(
         call: TestApplicationCall,
         code: HttpStatusCode = HttpStatusCode.OK,
-        json: String
+        json: String,
+        contentType: String? = null
 ) {
 
-    call.response.apply {
-        it("return ${code.value} status code") {
-            expect(code) { status() }
-        }
+    call.response.run {
+        testCode(this, code)
 
         it("has expected json") {
             expect(removeWhitespace(json)) { content }
         }
+
+        contentType?.let { type ->
+            testContentType(this, type)
+        }
     }
+}
+
+fun Suite.testCode(
+        response: TestApplicationResponse,
+        code: HttpStatusCode = HttpStatusCode.OK
+) {
+    it("return ${code.value} status code") {
+        expect(code) { response.status() }
+    }
+}
+
+fun Suite.testContentType(
+        response: TestApplicationResponse,
+        contentType: String
+) {
+    it("has content type $contentType") {
+        assertEquals(contentType, response.contentType().toString())
+    }
+}
+
+
+fun assertContains(actual: String, containing: String) {
+    val containsMessage =
+            """
+        Expected:
+        $actual
+
+        To contain:
+        $containing
+        """
+
+    assertTrue(actual.contains(containing), containsMessage)
+}
+
+fun assertDoesntContains(actual: String, containing: String) {
+    val containsMessage =
+            """
+        Expected:
+        $actual
+
+        Not to contain:
+        $containing
+        """
+
+    assertFalse(actual.contains(containing), containsMessage)
 }

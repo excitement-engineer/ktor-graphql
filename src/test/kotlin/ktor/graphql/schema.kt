@@ -3,7 +3,6 @@ package ktor.graphql
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.coxautodev.graphql.tools.SchemaParser
-import graphQLRoute.urlString
 import graphql.schema.DataFetchingEnvironment
 import io.ktor.application.Application
 import io.ktor.routing.routing

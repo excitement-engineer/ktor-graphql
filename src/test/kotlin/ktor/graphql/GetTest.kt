@@ -1,8 +1,5 @@
 package ktor.graphql
 
-import graphQLRoute.getRequest
-import graphQLRoute.testResponse
-import graphQLRoute.urlString
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import org.spekframework.spek2.Spek
