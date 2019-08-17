@@ -1,14 +1,17 @@
 package graphQLRoute
 
 import io.ktor.application.Application
+import io.ktor.application.ApplicationCall
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.formUrlEncode
+import io.ktor.routing.routing
 import io.ktor.server.testing.TestApplicationCall
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.TestApplicationRequest
 import io.ktor.server.testing.withTestApplication
-import ktor.graphql.testGraphQLRoute
+import io.ktor.util.pipeline.PipelineContext
+import ktor.graphql.*
 import org.spekframework.spek2.style.specification.Suite
 import kotlin.test.expect
 
@@ -42,6 +45,12 @@ fun <R> getRequest(callback: TestApplicationRequest.() -> R) = testApp {
         method = HttpMethod.Get
         callback(this)
     }
+}
+
+fun TestApplicationEngine.testGraphQLServer(
+        setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> GraphQLRouteConfig)? = null
+) = application.routing {
+    graphQL(urlString(), schema, setup)
 }
 
 

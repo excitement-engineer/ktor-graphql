@@ -1,11 +1,11 @@
 package ktor.graphql
 
 import graphQLRoute.getRequest
+import graphQLRoute.testGraphQLServer
 import graphQLRoute.testResponse
 import graphQLRoute.urlString
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.routing.routing
 import io.ktor.server.testing.withTestApplication
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -208,14 +208,11 @@ object IntegrationTest : Spek({
 
             var requestInSetupFunction: GraphQLRequest? = null
 
-            application.routing {
-                graphQL(urlString(), schema) { request ->
-                    println(request)
-                    requestInSetupFunction = request
-                    config {
-                        context = "testValue"
-                        rootValue = "testValue"
-                    }
+            testGraphQLServer { request ->
+                requestInSetupFunction = request
+                config {
+                    context = "testValue"
+                    rootValue = "testValue"
                 }
             }
 
@@ -278,10 +275,8 @@ object IntegrationTest : Spek({
         describe("it catches errors from the setup function") {
 
             withTestApplication {
-                application.routing {
-                    graphQL(urlString(), schema) {
-                        throw Exception("Something went wrong")
-                    }
+                testGraphQLServer {
+                    throw Exception("Something went wrong")
                 }
 
                 testResponse(
