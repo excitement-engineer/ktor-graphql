@@ -1,32 +1,46 @@
 package ktor.graphql
 
-import graphQLRoute.removeWhitespace
-import graphQLRoute.urlString
+import graphQLRoute.*
 import graphql.ExceptionWhileDataFetching
 import graphql.GraphqlErrorHelper
-import io.ktor.application.Application
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.routing.route
-import io.ktor.routing.routing
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
-import org.junit.Test
-import kotlin.test.assertEquals
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
-class ErrorHandlingTest {
+object ErrorHandlingTest : Spek({
 
+    describe("it catches errors from the setup function") {
 
-    @Test
-    fun `it handles field errors caught by graphql`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(Pair("query", "{ thrower }"))
-            method = HttpMethod.Get
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(
-                expected = removeWhitespace("""
+        withTestApplication {
+            testGraphQLServer {
+                throw Exception("Something went wrong")
+            }
+
+            testResponse(
+                    call = handleRequest {
+                        uri = urlString("query" to "{ test }")
+                    },
+                    code = HttpStatusCode.InternalServerError,
+                    json = """
+                            {
+                                "errors": [{ "message": "Something went wrong" }]
+                            }
+                        """
+            )
+        }
+    }
+
+    describe("handles field errors caught by graphql") {
+
+        testResponse(
+                call = getRequest {
+                    uri = urlString("query" to "{ thrower }")
+                },
+                json = """
                 {
                     "data": {
                         "thrower": null
@@ -39,23 +53,17 @@ class ErrorHandlingTest {
                         }
                     ]
                 }
-                """),
-                actual = response.content
-            )
-        }
+                """
+        )
     }
 
-    @Test
-    fun `handles query errors from non-null top field errors`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(Pair("query", "{ nonNullThrower }"))
-            method = HttpMethod.Get
-        }) {
-
-            assertEquals(expected = HttpStatusCode.InternalServerError, actual = response.status())
-
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("handles query errors from non-null top field errors") {
+        testResponse(
+                call = getRequest {
+                    uri = urlString("query" to "{ nonNullThrower }")
+                },
+                code = HttpStatusCode.InternalServerError,
+                json = """
                         {
                             "data": null,
                             "errors": [
@@ -66,105 +74,73 @@ class ErrorHandlingTest {
                                 }
                             ]
                         }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `allows for custom error formatting to sanitize`() = withTestApplication {
-        application.routing {
-
-                graphQL(urlString(), schema) {
-                    config {
-                        context = "hello"
-                        formatError = {
-                            val message = if (this is ExceptionWhileDataFetching) {
-                                exception.message
-                            } else {
-                                message
-                            }
-                            mapOf(
+    describe("allows for custom error formatting to sanitize") {
+        withTestApplication {
+            testGraphQLServer {
+                config {
+                    formatError = {
+                        val message = if (this is ExceptionWhileDataFetching) {
+                            exception.message
+                        } else {
+                            message
+                        }
+                        mapOf(
                                 Pair("message", "Custom error format: $message")
-                            )
-                        }
+                        )
                     }
                 }
-        }
-
-        with(handleRequest {
-            uri = urlString(Pair("query", "{ thrower }"))
-            method = HttpMethod.Get
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(expected = removeWhitespace("""
-                {
-                    "data": {
-                        "thrower": null
-                    },
-                    "errors": [
-                        {
-                            "message": "Custom error format: Throws!"
-                        }
-                    ]
-                }
-                """), actual = response.content)
+            }
         }
     }
 
-    @Test
-    fun `allows for custom error formatting to elaborate`() = withTestApplication {
-        application.routing {
-                graphQL(urlString(), schema) {
-                    config {
-                        formatError = {
-                            mapOf(
-                                    Pair("message", message),
-                                    Pair("locations", GraphqlErrorHelper.locations(locations)),
-                                    Pair("stack", "stack trace")
-                            )
-                        }
+    describe("allows for custom error formatting to elaborate") {
+
+        withTestApplication {
+            testGraphQLServer {
+                config {
+                    formatError = {
+                        mapOf(
+                                Pair("message", message),
+                                Pair("locations", GraphqlErrorHelper.locations(locations)),
+                                Pair("stack", "stack trace")
+                        )
                     }
                 }
+            }
 
-        }
-
-        with(handleRequest {
-            uri = urlString(Pair("query", "{ thrower }"))
-            method = HttpMethod.Get
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(expected = removeWhitespace("""
-                {
-                    "data": {
-                        "thrower": null
+            testResponse(
+                    call = handleRequest {
+                        uri = urlString("query" to "{ thrower }")
                     },
-                    "errors": [
+                    json = """
                         {
-                            "message":"Exception while fetching data (/thrower) : Throws!",
-                            "locations":[{"line":1,"column":3}],
-                            "stack":"stack trace"
+                            "data": {
+                                "thrower": null
+                            },
+                            "errors": [
+                                {
+                                    "message":"Exception while fetching data (/thrower) : Throws!",
+                                    "locations":[{"line":1,"column":3}],
+                                    "stack":"stack trace"
+                                }
+                            ]
                         }
-                    ]
-                }
-                """), actual = response.content)
-        }
-    }
-
-    @Test
-    fun `handles syntax errors caught by GraphL`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(Pair("query", "syntaxerror"))
-            method = HttpMethod.Get
-        }) {
-            assertEquals(
-                expected = HttpStatusCode.BadRequest,
-                actual = response.status()
+                        """
             )
+        }
+    }
 
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("handles syntax errors caught by GraphQL") {
+        testResponse(
+                call = getRequest {
+                    uri = urlString("query" to "synxtaxerror")
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
                     {
                         "errors": [
                             {
@@ -173,26 +149,18 @@ class ErrorHandlingTest {
                             }
                         ]
                     }
-                    """),
-                    actual = response.content
-            )
-        }
+                """.trimIndent()
+        )
     }
 
-    @Test
-    fun `handles errors caused by a lack of query`() = withTestApplication(Application::testGraphQLRoute) {
-
-        with(handleRequest{
-            uri = urlString()
-            method = HttpMethod.Get
-        }) {
-            assertEquals(
-                    expected = HttpStatusCode.BadRequest,
-                    actual = response.status()
-            )
-
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("handles error caused by a lack of query") {
+        testResponse(
+                call = getRequest {
+                    addHeader(HttpHeaders.ContentType, "application/json")
+                    uri = urlString()
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
                     {
                         "errors": [
                             {
@@ -200,23 +168,17 @@ class ErrorHandlingTest {
                             }
                         ]
                     }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `handles invalid JSON bodies`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString()
-            method = HttpMethod.Post
-            addHeader(HttpHeaders.ContentType, "application/json")
-            setBody("[]")
-        }) {
-            assertEquals(HttpStatusCode.BadRequest, response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("handles invalid JSON bodies") {
+        testResponse(
+                call = postJSONRequest {
+                    setBody("[]")
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
                     {
                         "errors": [
                             {
@@ -224,23 +186,17 @@ class ErrorHandlingTest {
                             }
                          ]
                     }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `handles incomplete JSON bodies`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString()
-            method = HttpMethod.Post
-            addHeader(HttpHeaders.ContentType, "application/json")
-            setBody("""{"query":""")
-        }) {
-            assertEquals(HttpStatusCode.BadRequest, response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("handles incomplete JSON bodies") {
+        testResponse(
+                call = postJSONRequest {
+                    setBody("""{"query":""")
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
                     {
                         "errors": [
                             {
@@ -248,29 +204,18 @@ class ErrorHandlingTest {
                             }
                          ]
                     }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `handles plain post text`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString()
-            method = HttpMethod.Post
-            addHeader(HttpHeaders.ContentType, "text/plain")
-            setBody("query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
-
-
-        }) {
-            assertEquals(
-                    expected = HttpStatusCode.BadRequest,
-                    actual = response.status()
-            )
-
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("handles plain post text") {
+        testResponse(
+                call = postRequest {
+                    addHeader(HttpHeaders.ContentType, "text/plain")
+                    setBody("query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
                     {
                         "errors": [
                             {
@@ -278,30 +223,20 @@ class ErrorHandlingTest {
                             }
                         ]
                     }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-
-    @Test
-    fun `handles poorly formed variables`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(
-                    Pair("variables", "who:you"),
-                    Pair("query", "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
-            )
-            method = HttpMethod.Post
-
-        }) {
-            assertEquals(
-                    expected = HttpStatusCode.BadRequest,
-                    actual = response.status()
-            )
-
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("handles poorly formed variables") {
+        testResponse(
+                call = postRequest {
+                    uri = urlString(
+                            "variables" to "who:you",
+                            "query" to "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }"
+                    )
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
                     {
                         "errors": [
                             {
@@ -309,39 +244,30 @@ class ErrorHandlingTest {
                             }
                          ]
                     }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `allows for custom error formatting of poorly formed requests`() = withTestApplication {
-        application.routing {
-                graphQL(urlString(), schema) {
-                    config {
-                        formatError = {
-                            mapOf(Pair("message", "Custom error format: ${this.message}"))
-                        }
+    describe("allows for custom error formatting of poorly formed requests") {
+        withTestApplication {
+            testGraphQLServer {
+                config {
+                    formatError = {
+                        mapOf(Pair("message", "Custom error format: ${this.message}"))
                     }
                 }
+            }
 
-        }
-        with(handleRequest {
-            uri = urlString(
-                    Pair("variables", "who:you"),
-                    Pair("query", "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
-            )
-            method = HttpMethod.Post
-
-        }) {
-            assertEquals(
-                    expected = HttpStatusCode.BadRequest,
-                    actual = response.status()
-            )
-
-            assertEquals(
-                    expected = removeWhitespace("""
+            testResponse(
+                    call = handleRequest {
+                        uri = urlString(
+                                Pair("variables", "who:you"),
+                                Pair("query", "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
+                        )
+                        method = HttpMethod.Post
+                    },
+                    code = HttpStatusCode.BadRequest,
+                    json = """
                     {
                         "errors": [
                             {
@@ -349,33 +275,25 @@ class ErrorHandlingTest {
                             }
                          ]
                     }
-                    """),
-                    actual = response.content
+                    """
             )
         }
     }
 
-
-    @Test
-    fun `handles invalid variables`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString()
-            method = HttpMethod.Post
-            setBody("""
-                {
-                    "query": "query helloWho(${"$"}value: Boolean){ testBoolean(value: ${"$"}value) }",
-                    "variables": {
-                        "value": ["Dolly", "Jonty"]
-                    }
-                }
-            """)
-            addHeader(HttpHeaders.ContentType, "application/json")
-
-        }) {
-
-            assertEquals(expected = HttpStatusCode.InternalServerError, actual = response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("handles invalid variables") {
+        testResponse(
+                call = postJSONRequest {
+                    setBody("""
+                        {
+                            "query": "query helloWho(${"$"}value: Boolean){ testBoolean(value: ${"$"}value) }",
+                            "variables": {
+                                "value": ["Dolly", "Jonty"]
+                            }
+                        }
+                    """)
+                },
+                code = HttpStatusCode.InternalServerError,
+                json = """
                 {
                     "data": null,
                     "errors": [{
@@ -386,10 +304,9 @@ class ErrorHandlingTest {
                         }]
                     }]
                 }
-                """),
-                    actual = response.content
-            )
-        }
+                """
+        )
     }
 
-}
+})
+
