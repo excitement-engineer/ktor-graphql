@@ -1,44 +1,23 @@
 package ktor.graphql
 
-import graphQLRoute.removeWhitespace
+import graphQLRoute.getRequest
+import graphQLRoute.testResponse
 import graphQLRoute.urlString
-import io.ktor.application.Application
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.routing.routing
-import io.ktor.server.testing.TestApplicationCall
-import io.ktor.server.testing.TestApplicationEngine
-import io.ktor.server.testing.TestApplicationRequest
 import io.ktor.server.testing.withTestApplication
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.Suite
 import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertEquals
-import kotlin.test.expect
 
 object IntegrationTest : Spek({
 
-    fun <R> testApp(callback: TestApplicationEngine.() -> R) = withTestApplication(Application::testGraphQLRoute, callback)
-
-    fun <R> request(callback: TestApplicationRequest.() -> R) = testApp {
-        handleRequest {
-            callback(this)
-        }
-    }
-
-    fun <R> getRequest(callback: TestApplicationRequest.() -> R) = testApp {
-        handleRequest {
-            method = HttpMethod.Get
-            callback(this)
-        }
-    }
     describe("GET call") {
-
 
         describe("with query param") {
             val call = getRequest {
@@ -347,20 +326,3 @@ object IntegrationTest : Spek({
 
 })
 
-
-fun Suite.testResponse(
-        call: TestApplicationCall,
-        code: HttpStatusCode = HttpStatusCode.OK,
-        json: String
-) {
-
-    call.response.apply {
-        it("return ${code.value} status code") {
-            expect(code) { status() }
-        }
-
-        it("has expected json") {
-            expect(removeWhitespace(json)) { content }
-        }
-    }
-}
