@@ -1,16 +1,13 @@
 package ktor.graphql
 
-import graphQLRoute.getRequest
-import graphQLRoute.testGraphQLServer
-import graphQLRoute.testResponse
-import graphQLRoute.urlString
+import graphQLRoute.*
 import graphql.ExceptionWhileDataFetching
-import graphql.GraphQLError
 import graphql.GraphqlErrorHelper
-import io.ktor.application.ApplicationCall
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
-import io.ktor.util.pipeline.PipelineContext
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -117,9 +114,177 @@ object ErrorHandling : Spek({
     }
 
     describe("handles syntax errors caught by GraphQL") {
-        getRequest {
-            uri = urlString("query" to "synxtaxerror")
+        testResponse(
+                call = getRequest {
+                    uri = urlString("query" to "synxtaxerror")
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
+                    {
+                        "errors": [
+                            {
+                                "message": "Invalid Syntax",
+                                "locations": [{ "line": 1, "column": 0 }]
+                            }
+                        ]
+                    }
+                """.trimIndent()
+        )
+    }
+
+    describe("handles error caused by a lack of query") {
+        testResponse(
+                call = getRequest {
+                    addHeader(HttpHeaders.ContentType, "application/json")
+                    uri = urlString()
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
+                    {
+                        "errors": [
+                            {
+                                "message": "Must provide query string."
+                            }
+                        ]
+                    }
+                    """
+        )
+    }
+
+    describe("handles invalid JSON bodies") {
+        testResponse(
+                call = postJSONRequest {
+                    setBody("[]")
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
+                    {
+                        "errors": [
+                            {
+                                "message": "POST body sent invalid JSON."
+                            }
+                         ]
+                    }
+                    """
+        )
+    }
+
+    describe("handles incomplete JSON bodies") {
+        testResponse(
+                call = postJSONRequest {
+                    setBody("""{"query":""")
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
+                    {
+                        "errors": [
+                            {
+                                "message": "POST body sent invalid JSON."
+                            }
+                         ]
+                    }
+                    """
+        )
+    }
+
+    describe("handles plain post text") {
+        testResponse(
+                call = postRequest {
+                    addHeader(HttpHeaders.ContentType, "text/plain")
+                    setBody("query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
+                    {
+                        "errors": [
+                            {
+                                "message": "Must provide query string."
+                            }
+                        ]
+                    }
+                    """
+        )
+    }
+
+    describe("handles poorly formed variables") {
+        testResponse(
+                call = postRequest {
+                    uri = urlString(
+                            "variables" to "who:you",
+                            "query" to "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }"
+                    )
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
+                    {
+                        "errors": [
+                            {
+                                "message": "Variables are invalid JSON."
+                            }
+                         ]
+                    }
+                    """
+        )
+    }
+
+    describe("allows for custom error formatting of poorly formed requests") {
+        withTestApplication {
+            testGraphQLServer {
+                config {
+                    formatError = {
+                        mapOf(Pair("message", "Custom error format: ${this.message}"))
+                    }
+                }
+            }
+
+            testResponse(
+                    call = handleRequest {
+                        uri = urlString(
+                                Pair("variables", "who:you"),
+                                Pair("query", "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
+                        )
+                        method = HttpMethod.Post
+                    },
+                    code = HttpStatusCode.BadRequest,
+                    json = """
+                    {
+                        "errors": [
+                            {
+                                "message": "Custom error format: Variables are invalid JSON."
+                            }
+                         ]
+                    }
+                    """
+            )
         }
+    }
+
+    describe("handles invalid variables") {
+        testResponse(
+                call = postJSONRequest {
+                    setBody("""
+                        {
+                            "query": "query helloWho(${"$"}value: Boolean){ testBoolean(value: ${"$"}value) }",
+                            "variables": {
+                                "value": ["Dolly", "Jonty"]
+                            }
+                        }
+                    """)
+                },
+                code = HttpStatusCode.InternalServerError,
+                json = """
+                {
+                    "data": null,
+                    "errors": [{
+                        "message": "Variable 'value' has an invalid value. Expected type 'Boolean' but was 'ArrayList'.",
+                        "locations": [{
+                            "line": 1,
+                            "column": 16
+                        }]
+                    }]
+                }
+                """
+        )
     }
 
 })
