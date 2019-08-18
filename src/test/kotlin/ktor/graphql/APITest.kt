@@ -1,10 +1,13 @@
 package ktor.graphql
 
 import io.ktor.server.testing.withTestApplication
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import ktor.graphql.helpers.getRequest
+import ktor.graphql.helpers.testGraphQLServer
+import ktor.graphql.helpers.testResponse
+import ktor.graphql.helpers.urlString
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertEquals

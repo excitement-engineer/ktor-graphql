@@ -2,6 +2,7 @@ package ktor.graphql
 
 import io.ktor.http.HttpHeaders
 import io.ktor.server.testing.setBody
+import ktor.graphql.helpers.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 

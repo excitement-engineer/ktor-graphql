@@ -4,6 +4,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.*
+import ktor.graphql.helpers.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 

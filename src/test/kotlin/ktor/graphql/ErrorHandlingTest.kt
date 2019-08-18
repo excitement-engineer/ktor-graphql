@@ -7,6 +7,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
+import ktor.graphql.helpers.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 

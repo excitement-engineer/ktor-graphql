@@ -1,11 +1,9 @@
-package ktor.graphql
+package ktor.graphql.helpers
 
 import com.coxautodev.graphql.tools.GraphQLMutationResolver
 import com.coxautodev.graphql.tools.GraphQLQueryResolver
 import com.coxautodev.graphql.tools.SchemaParser
 import graphql.schema.DataFetchingEnvironment
-import io.ktor.application.Application
-import io.ktor.routing.routing
 
 
 val schemaDef = """
@@ -58,11 +56,6 @@ class Query: GraphQLQueryResolver {
 }
 
 class Mutation: GraphQLMutationResolver {
-    fun writeTest() =  Query()
+    fun writeTest() = Query()
 }
 
-fun Application.testGraphQLRoute() {
-    routing {
-        graphQL(urlString(), schema)
-    }
-}
