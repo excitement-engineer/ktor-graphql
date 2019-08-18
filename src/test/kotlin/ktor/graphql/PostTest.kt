@@ -8,117 +8,241 @@ import org.spekframework.spek2.style.specification.describe
 object PostTest : Spek({
 
     describe("allows POST with JSON encoding") {
-        postJSONRequest {
-            setBody("""
-                {
-                	"query": "\n  query IntrospectionQuery {\n    __schema {\n      queryType { name }\n      mutationType { name }\n      types {\n        ...FullType\n      }\n      directives {\n        name\n        description\n        locations\n        args {\n          ...InputValue\n        }\n      }\n    }\n  }\n\n  fragment FullType on __Type {\n    kind\n    name\n    description\n    fields(includeDeprecated: true) {\n      name\n      description\n      args {\n        ...InputValue\n      }\n      type {\n        ...TypeRef\n      }\n      isDeprecated\n      deprecationReason\n    }\n    inputFields {\n      ...InputValue\n    }\n    interfaces {\n      ...TypeRef\n    }\n    enumValues(includeDeprecated: true) {\n      name\n      description\n      isDeprecated\n      deprecationReason\n    }\n    possibleTypes {\n      ...TypeRef\n    }\n  }\n\n  fragment InputValue on __InputValue {\n    name\n    description\n    type { ...TypeRef }\n    defaultValue\n  }\n\n  fragment TypeRef on __Type {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n                ofType {\n                  kind\n                  name\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n"
+
+        val query = """
+        query IntrospectionQuery {
+             __schema {
+                queryType {
+                    name
                 }
-            """)
+                mutationType {
+                    name
+                }
+                types {
+                    ...FullType
+                }
+                directives {
+                    name
+                    description
+                    locations
+                    args {
+                        ...InputValue
+                    }
+                }
+            }
+        }
+
+        fragment FullType on __Type {
+            kind
+            name
+            description
+            fields(includeDeprecated: true) {
+                name
+                description
+                args {
+                    ...InputValue
+                }
+                type {
+                    ...TypeRef
+                }
+                isDeprecated
+                deprecationReason
+            }
+            inputFields {
+                ...InputValue
+            }
+            interfaces {
+                ...TypeRef
+            }
+            enumValues(includeDeprecated: true) {
+                  name
+                  description
+                  isDeprecated
+                  deprecationReason
+              }
+              possibleTypes {
+                ...TypeRef
+              }
+            }
+
+            fragment InputValue on __InputValue {
+                name
+                description
+                type {
+                    ...TypeRef
+                }
+                defaultValue
+            }
+
+            fragment TypeRef on __Type {
+                kind
+                name
+                ofType {
+                    kind
+                    name
+                    ofType {
+                        kind
+                        name
+                        ofType {
+                            kind
+                            name
+                            ofType {
+                                kind
+                                name
+                                ofType {
+                                    kind
+                                    name
+                                    ofType {
+                                        kind
+                                        name
+                                        ofType {
+                                            kind
+                                            name
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        """
+
+        postJSONRequest {
+            setJsonBody("query" to query)
         }.response.run {
             testCode(this)
         }
     }
 
     describe("allows sending a mutation via POST") {
+
+        val mutation = """
+            mutation TestMutation {
+                writeTest {
+                    test
+                }
+            }
+        """
+
         testResponse(
                 call = postJSONRequest {
-                    setBody("""
-                        {
-                            "query": "mutation TestMutation { writeTest { test } }"
-                        }
-                    """)
+                    setJsonBody("query" to mutation)
                 },
                 json = """
-                    {
-                        "data": {
-                            "writeTest":{
-                                "test":"Hello World"
-                            }
+                {
+                    "data": {
+                        "writeTest":{
+                            "test":"Hello World"
                         }
                     }
-                """
+                }
+            """
         )
     }
 
     describe("support POST JSON query with JSON variables") {
 
+        val query = """
+            query helloWho(${"$"}who: String) {
+                test(who: ${"$"}who)
+            }
+        """
+
+        val variables = mapOf(
+                "who" to "Dolly"
+        )
+
         testResponse(
                 call = postJSONRequest {
-                    setBody("""
-                        {
-                            "query": "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }",
-                            "variables": {"who": "Dolly"}
-                        }
-                        """
+                    setJsonBody(
+                            "query" to query,
+                            "variables" to variables
                     )
                 },
                 json = """
-                    {
-                        "data": {
-                            "test":"Hello Dolly"
-                        }
+                {
+                    "data": {
+                        "test":"Hello Dolly"
                     }
-                    """
+                }
+                """
         )
     }
 
     describe("support POST JSON with GET variable values") {
+
+        val variables = """
+            {
+                "who": "Dolly"
+            }
+            """
+
+        val query = """
+            query helloWho(${"$"}who: String){
+                test(who: ${"$"}who)
+            }
+        """
+
         testResponse(
                 call = postJSONRequest {
-                    uri= urlString(
-                            "variables" to """
-                                {
-                                    "who": "Dolly"
-                                }
-                                """
-                    )
-                    setBody("""
-                        {
-                            "query": "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }"
-                        }
-                        """)
+                    uri = urlString("variables" to variables)
+
+                    setJsonBody("query" to query)
                 },
                 json = """
-                    {
-                        "data": {
-                            "test":"Hello Dolly"
-                        }
+                {
+                    "data": {
+                        "test":"Hello Dolly"
                     }
-                    """
+                }
+                """
         )
     }
 
     describe("allows POST with operation name") {
+
+        val query = """
+             query helloYou {
+                test(who: "You")
+             }
+             query helloWorld {
+                test(who: "World")
+             }
+          """
+
         testResponse(
                 call = postJSONRequest {
-                    setBody("""
-                        {
-                            "query": "\n query helloYou { test(who: \"You\") }\n query helloWorld { test(who: \"World\") }\n",
-                            "operationName": "helloWorld"
-                        }
-                        """)
+                    setJsonBody(
+                            "query" to query,
+                            "operationName" to "helloWorld"
+                    )
                 },
                 json = """
-                    {
-                        "data": {
-                            "test":"Hello World"
-                        }
-                    }
-                    """
+            {
+                "data": {
+                    "test":"Hello World"
+                }
+            }
+            """
         )
     }
 
     describe("allows POST with GET operation name") {
+
+        val query = """
+            query helloYou {
+                test(who: "You")
+            }
+            query helloWorld {
+                test(who: "World")
+            }
+        """
+
         testResponse(
                 call = postJSONRequest {
                     uri = urlString(Pair("operationName", "helloWorld"))
-
-                    setBody("""
-                        {
-                            "query": "\n query helloYou { test(who: \"You\") }\n query helloWorld { test(who: \"World\") }\n"
-                        }
-                        """
-                    )
+                    setJsonBody("query" to query)
                 },
                 json = """
                     {
@@ -131,6 +255,13 @@ object PostTest : Spek({
     }
 
     describe("supports POST raw text query with GET variable values") {
+
+        val query = """
+            query helloWho(${"$"}who: String){
+                test(who: ${"$"}who)
+            }
+        """.trimIndent()
+
         testResponse(
                 call = postRequest {
                     uri = urlString(
@@ -141,7 +272,7 @@ object PostTest : Spek({
                             """,
                             "operationName" to "helloWho"
                     )
-                    setBody("query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
+                    setBody(query)
                     addHeader(HttpHeaders.ContentType, "application/graphql")
                 },
                 json = """

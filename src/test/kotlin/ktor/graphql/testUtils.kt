@@ -1,5 +1,6 @@
 package ktor.graphql
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.http.HttpHeaders
@@ -100,6 +101,10 @@ fun Suite.testContentType(
     }
 }
 
+fun TestApplicationRequest.setJsonBody(vararg body: Pair<String, Any>) {
+    setBody(body.toMap().toJsonString())
+}
+
 
 fun assertContains(actual: String, containing: String) {
     val containsMessage =
@@ -126,3 +131,5 @@ fun assertDoesntContains(actual: String, containing: String) {
 
     assertFalse(actual.contains(containing), containsMessage)
 }
+
+fun Map<String, Any>.toJsonString() = jacksonObjectMapper().writeValueAsString(this)

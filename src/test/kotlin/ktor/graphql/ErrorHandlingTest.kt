@@ -1,6 +1,5 @@
 package ktor.graphql
 
-import graphQLRoute.*
 import graphql.ExceptionWhileDataFetching
 import graphql.GraphqlErrorHelper
 import io.ktor.http.HttpHeaders
