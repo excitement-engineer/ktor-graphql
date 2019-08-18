@@ -1,4 +1,4 @@
-def versionNo = '0.2.3'
+def versionNo = '0.2.4'
 
 group 'com.github.excitement-engineer'
 version versionNo
@@ -58,11 +58,25 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
+task sourcesJar(type: Jar, dependsOn: classes) {
+    dependsOn classes
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+
 publishing {
     publications {
         MyPublication(MavenPublication) {
             from components.java
+
+            artifact sourcesJar
+
         }
+
     }
 }
 
