@@ -5,7 +5,7 @@ import io.ktor.server.testing.setBody
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object Post : Spek({
+object PostTest : Spek({
 
     describe("allows POST with JSON encoding") {
         postJSONRequest {
