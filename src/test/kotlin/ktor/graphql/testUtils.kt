@@ -57,7 +57,7 @@ fun <R> getRequest(callback: TestApplicationRequest.() -> R) = testApp {
 fun TestApplicationEngine.testGraphQLServer(
         setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> GraphQLRouteConfig)? = null
 ) = application.routing {
-    graphQL(urlString(), Schema.schema, setup)
+    graphQL(urlString(), schema, setup)
 }
 
 
