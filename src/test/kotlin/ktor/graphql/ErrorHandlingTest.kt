@@ -21,7 +21,7 @@ object ErrorHandlingTest : Spek({
             }
 
             testResponse(
-                    call = handleRequest {
+                    response = handleRequest {
                         uri = urlString("query" to "{ test }")
                     },
                     code = HttpStatusCode.InternalServerError,
@@ -37,7 +37,7 @@ object ErrorHandlingTest : Spek({
     describe("handles field errors caught by graphql") {
 
         testResponse(
-                call = getRequest {
+                response = getRequest {
                     uri = urlString("query" to "{ thrower }")
                 },
                 json = """
@@ -59,7 +59,7 @@ object ErrorHandlingTest : Spek({
 
     describe("handles query errors from non-null top field errors") {
         testResponse(
-                call = getRequest {
+                response = getRequest {
                     uri = urlString("query" to "{ nonNullThrower }")
                 },
                 code = HttpStatusCode.InternalServerError,
@@ -113,7 +113,7 @@ object ErrorHandlingTest : Spek({
             }
 
             testResponse(
-                    call = handleRequest {
+                    response = handleRequest {
                         uri = urlString("query" to "{ thrower }")
                     },
                     json = """
@@ -136,7 +136,7 @@ object ErrorHandlingTest : Spek({
 
     describe("handles syntax errors caught by GraphQL") {
         testResponse(
-                call = getRequest {
+                response = getRequest {
                     uri = urlString("query" to "synxtaxerror")
                 },
                 code = HttpStatusCode.BadRequest,
@@ -155,7 +155,7 @@ object ErrorHandlingTest : Spek({
 
     describe("handles error caused by a lack of query") {
         testResponse(
-                call = getRequest {
+                response = getRequest {
                     addHeader(HttpHeaders.ContentType, "application/json")
                     uri = urlString()
                 },
@@ -174,7 +174,7 @@ object ErrorHandlingTest : Spek({
 
     describe("handles invalid JSON bodies") {
         testResponse(
-                call = postJSONRequest {
+                response = postJSONRequest {
                     setBody("[]")
                 },
                 code = HttpStatusCode.BadRequest,
@@ -192,7 +192,7 @@ object ErrorHandlingTest : Spek({
 
     describe("handles incomplete JSON bodies") {
         testResponse(
-                call = postJSONRequest {
+                response = postJSONRequest {
                     setBody("""{"query":""")
                 },
                 code = HttpStatusCode.BadRequest,
@@ -210,7 +210,7 @@ object ErrorHandlingTest : Spek({
 
     describe("handles plain post text") {
         testResponse(
-                call = postRequest {
+                response = postRequest {
                     addHeader(HttpHeaders.ContentType, "text/plain")
                     setBody("query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
                 },
@@ -229,7 +229,7 @@ object ErrorHandlingTest : Spek({
 
     describe("handles poorly formed variables") {
         testResponse(
-                call = postRequest {
+                response = postRequest {
                     uri = urlString(
                             "variables" to "who:you",
                             "query" to "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }"
@@ -259,7 +259,7 @@ object ErrorHandlingTest : Spek({
             }
 
             testResponse(
-                    call = handleRequest {
+                    response = handleRequest {
                         uri = urlString(
                                 Pair("variables", "who:you"),
                                 Pair("query", "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
@@ -282,7 +282,7 @@ object ErrorHandlingTest : Spek({
 
     describe("handles invalid variables") {
         testResponse(
-                call = postJSONRequest {
+                response = postJSONRequest {
                     setBody("""
                         {
                             "query": "query helloWho(${"$"}value: Boolean){ testBoolean(value: ${"$"}value) }",
