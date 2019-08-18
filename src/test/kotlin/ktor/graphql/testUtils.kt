@@ -63,13 +63,13 @@ fun TestApplicationEngine.testGraphQLServer(
 
 
 fun Suite.testResponse(
-        response: TestApplicationCall,
+        call: TestApplicationCall,
         code: HttpStatusCode = HttpStatusCode.OK,
         json: String,
         contentType: String? = null
 ) {
 
-    response.response.run {
+    call.response.run {
         testCode(this, code)
 
         it("has expected json") {

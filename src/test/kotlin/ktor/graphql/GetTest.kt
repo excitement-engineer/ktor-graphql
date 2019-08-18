@@ -109,7 +109,7 @@ object GetTest : Spek({
 
     describe("errors when missing the operation name") {
         testResponse(
-                response = getRequest {
+                call = getRequest {
                     uri = urlString("query" to """
                             query TestQuery { test }
                             mutation TestMutation { writeTest { test } }
@@ -131,7 +131,7 @@ object GetTest : Spek({
 
     describe("errors when sending a mutation via GET") {
         testResponse(
-                response = getRequest {
+                call = getRequest {
                     uri = urlString("query" to "mutation TestMutation { writeTest { test } }")
                 },
                 code = HttpStatusCode.MethodNotAllowed,
@@ -149,7 +149,7 @@ object GetTest : Spek({
 
     describe("errors when selecting a mutation via a GET") {
         testResponse(
-                response = getRequest {
+                call = getRequest {
                     uri = urlString(
                             "operationName" to "TestMutation",
                             "query" to """
@@ -171,7 +171,7 @@ object GetTest : Spek({
 
     describe("allows a mutation to exists within a GET") {
         testResponse(
-                response = getRequest {
+                call = getRequest {
                     uri = urlString(
                             "operationName" to "TestQuery",
                             "query" to """

@@ -39,7 +39,7 @@ object GraphiQLTest : Spek({
                 addHeader(HttpHeaders.Accept, "text/html")
             }
             testResponse(
-                    response = call,
+                    call = call,
                     json = "{\"data\":{\"test\":\"Hello World\"}}",
                     contentType = "application/json; charset=UTF-8"
             )

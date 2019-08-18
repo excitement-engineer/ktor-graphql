@@ -25,7 +25,7 @@ object APITest : Spek({
 
         describe("allows passing in a context") {
             testResponse(
-                    response = handleRequest {
+                    call = handleRequest {
                         uri = urlString(
                                 "operationName" to "TestQuery",
                                 "query" to "query TestQuery { context }"
@@ -45,7 +45,7 @@ object APITest : Spek({
         describe("allows passing in a root value") {
 
             testResponse(
-                    response = handleRequest {
+                    call = handleRequest {
                         uri = urlString(
                                 "operationName" to "TestQuery",
                                 "query" to "query TestQuery { rootValue }"
@@ -63,7 +63,7 @@ object APITest : Spek({
 
         describe("it provides a setup function with arguments") {
             testResponse(
-                    response = handleRequest {
+                    call = handleRequest {
                         uri = urlString("query" to "{ test }")
                     },
                     json = "{\"data\":{\"test\":\"Hello World\"}}"
@@ -93,7 +93,7 @@ object APITest : Spek({
 
                 deferred.awaitAll().forEach { call ->
                     testResponse(
-                            response = call,
+                            call = call,
                             json = "{\"data\":{\"slow\":\"hello\"}}"
                     )
                 }
