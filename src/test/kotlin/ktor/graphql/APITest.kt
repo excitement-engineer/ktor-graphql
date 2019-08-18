@@ -83,7 +83,7 @@ object APITest : Spek({
 
             runBlocking {
                 val deferred = (0 until 2).map {
-                    GlobalScope.async {
+                    async {
                         getRequest {
                             uri = urlString(Pair("query", "{ slow }"))
                         }
