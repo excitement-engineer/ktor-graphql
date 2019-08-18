@@ -1,5 +1,6 @@
 package ktor.graphql
 
+import io.ktor.http.HttpHeaders
 import io.ktor.server.testing.setBody
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -19,17 +20,138 @@ object Post : Spek({
     }
 
     describe("allows sending a mutation via POST") {
+        testResponse(
+                call = postJSONRequest {
+                    setBody("""
+                        {
+                            "query": "mutation TestMutation { writeTest { test } }"
+                        }
+                    """)
+                },
+                json = """
+                    {
+                        "data": {
+                            "writeTest":{
+                                "test":"Hello World"
+                            }
+                        }
+                    }
+                """
+        )
+    }
 
-        postJSONRequest {
-            setBody("""
-            {
-                "query": "mutation TestMutation { writeTest { test } }"
-            }
-            """)
-        }.response.run {
-            
-        }
+    describe("support POST JSON query with JSON variables") {
 
+        testResponse(
+                call = postJSONRequest {
+                    setBody("""
+                        {
+                            "query": "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }",
+                            "variables": {"who": "Dolly"}
+                        }
+                        """
+                    )
+                },
+                json = """
+                    {
+                        "data": {
+                            "test":"Hello Dolly"
+                        }
+                    }
+                    """
+        )
+    }
+
+    describe("support POST JSON with GET variable values") {
+        testResponse(
+                call = postJSONRequest {
+                    uri= urlString(
+                            "variables" to """
+                                {
+                                    "who": "Dolly"
+                                }
+                                """
+                    )
+                    setBody("""
+                        {
+                            "query": "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }"
+                        }
+                        """)
+                },
+                json = """
+                    {
+                        "data": {
+                            "test":"Hello Dolly"
+                        }
+                    }
+                    """
+        )
+    }
+
+    describe("allows POST with operation name") {
+        testResponse(
+                call = postJSONRequest {
+                    setBody("""
+                        {
+                            "query": "\n query helloYou { test(who: \"You\") }\n query helloWorld { test(who: \"World\") }\n",
+                            "operationName": "helloWorld"
+                        }
+                        """)
+                },
+                json = """
+                    {
+                        "data": {
+                            "test":"Hello World"
+                        }
+                    }
+                    """
+        )
+    }
+
+    describe("allows POST with GET operation name") {
+        testResponse(
+                call = postJSONRequest {
+                    uri = urlString(Pair("operationName", "helloWorld"))
+
+                    setBody("""
+                        {
+                            "query": "\n query helloYou { test(who: \"You\") }\n query helloWorld { test(who: \"World\") }\n"
+                        }
+                        """
+                    )
+                },
+                json = """
+                    {
+                        "data": {
+                            "test":"Hello World"
+                        }
+                    }
+                """
+        )
+    }
+
+    describe("supports POST raw text query with GET variable values") {
+        testResponse(
+                call = postRequest {
+                    uri = urlString(
+                            "variables" to """
+                                {
+                                    "who": "Dolly"
+                                }
+                            """,
+                            "operationName" to "helloWho"
+                    )
+                    setBody("query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
+                    addHeader(HttpHeaders.ContentType, "application/graphql")
+                },
+                json = """
+                {
+                    "data": {
+                        "test":"Hello Dolly"
+                    }
+                }
+                """
+        )
     }
 
 })
