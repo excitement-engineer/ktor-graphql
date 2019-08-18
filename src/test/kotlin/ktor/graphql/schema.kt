@@ -8,30 +8,33 @@ import io.ktor.application.Application
 import io.ktor.routing.routing
 
 
-val schemaDef = """
 
-type Query {
-    test(who: String): String
-    testBoolean(value: Boolean): String
-    nonNullThrower: String!
-    thrower: String
-    context: String
-    rootValue: String
-    slow: String
+object Schema {
+
+    val schemaDef = """
+
+    type Query {
+        test(who: String): String
+        testBoolean(value: Boolean): String
+        nonNullThrower: String!
+        thrower: String
+        context: String
+        rootValue: String
+        slow: String
+    }
+
+    type Mutation {
+        writeTest: Query
+    }
+    """
+
+    val schema = SchemaParser
+            .newParser()
+            .schemaString(schemaDef)
+            .resolvers(Query(), Mutation())
+            .build()
+            .makeExecutableSchema()
 }
-
-type Mutation {
-    writeTest: Query
-}
-"""
-
-val schema = SchemaParser
-        .newParser()
-        .schemaString(schemaDef)
-        .resolvers(Query(), Mutation())
-        .build()
-        .makeExecutableSchema()
-
 
 
 class Query: GraphQLQueryResolver {
@@ -63,6 +66,6 @@ class Mutation: GraphQLMutationResolver {
 
 fun Application.testGraphQLRoute() {
     routing {
-        graphQL(urlString(), schema)
+        graphQL(urlString(), Schema.schema)
     }
 }
