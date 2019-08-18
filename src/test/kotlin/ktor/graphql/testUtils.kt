@@ -31,8 +31,6 @@ fun urlString(vararg queryParams: Pair<String, String>): String {
     return route
 }
 
-fun stringify(vararg queryParams: Pair<String, String>): String = queryParams.toList().formUrlEncode()
-
 fun <R> testApp(callback: TestApplicationEngine.() -> R) = withTestApplication(Application::testGraphQLRoute, callback)
 
 fun <R> postRequest(callback: TestApplicationRequest.() -> R) = testApp {
@@ -132,4 +130,4 @@ fun assertDoesntContains(actual: String, containing: String) {
     assertFalse(actual.contains(containing), containsMessage)
 }
 
-fun Map<String, Any>.toJsonString() = jacksonObjectMapper().writeValueAsString(this)
+fun Map<String, Any>.toJsonString(): String = jacksonObjectMapper().writeValueAsString(this)
