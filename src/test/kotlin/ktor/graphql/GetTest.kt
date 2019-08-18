@@ -1,101 +1,90 @@
 package ktor.graphql
 
-import graphQLRoute.removeWhitespace
-import graphQLRoute.urlString
-import io.ktor.application.Application
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.routing.route
-import io.ktor.routing.routing
-import io.ktor.server.testing.TestApplicationCall
-import io.ktor.server.testing.withTestApplication
-import kotlinx.coroutines.*
-import org.junit.Test
-import kotlin.test.assertEquals
+import ktor.graphql.helpers.getRequest
+import ktor.graphql.helpers.testResponse
+import ktor.graphql.helpers.urlString
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 
-class GraphQLRouteGetTest {
+object GetTest : Spek({
 
-    @Test
-    fun `allows GET with query param`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
+    describe("with query param") {
+        val call = getRequest {
             uri = urlString(Pair("query", "{ test }"))
-            method = HttpMethod.Get
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(expected = "{\"data\":{\"test\":\"Hello World\"}}", actual = response.content)
         }
+
+        testResponse(
+                call,
+                json = "{\"data\":{\"test\":\"Hello World\"}}"
+        )
     }
 
-    @Test
-    fun `allows GET with variable values`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
+    describe("with variable values") {
+
+        val call = getRequest {
             uri = urlString(
                     Pair("query", "query helloWho(\$who: String){ test(who: \$who) }"),
                     Pair("variables", "{ \"who\": \"Dolly\" }")
             )
-            method = HttpMethod.Get
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(expected = "{\"data\":{\"test\":\"Hello Dolly\"}}", actual = response.content)
         }
+
+        testResponse(
+                call,
+                json = "{\"data\":{\"test\":\"Hello Dolly\"}}"
+        )
     }
 
-    @Test
-    fun `allows GET with operation name`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
+    describe("with operation name") {
+        val call = getRequest {
             uri = urlString(
-                    Pair("query", """
+                    "query" to """
                               query helloYou { test(who: "You"), ...shared }
                               query helloWorld { test(who: "World"), ...shared }
                               query helloDolly { test(who: "Dolly"), ...shared }
                               fragment shared on Query {
                                 shared: test(who: "Everyone")
                               }
-                            """
-                    ),
-                    Pair("operationName", "helloWorld")
+                            """,
+                    "operationName" to "helloWorld"
             )
-            method = HttpMethod.Get
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
+        }
+
+        testResponse(
+                call,
+                json = """
                     {
                         "data": {
                             "test": "Hello World",
                             "shared": "Hello Everyone"
                         }
                     }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `allows GET if the content-type is application json`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
+    describe("with content-type application/json") {
+        val call = getRequest {
             uri = urlString(Pair("query", "{ test }"))
-            method = HttpMethod.Get
             addHeader(HttpHeaders.ContentType, "application/json")
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(expected = "{\"data\":{\"test\":\"Hello World\"}}", actual = response.content)
         }
+
+        testResponse(
+                call,
+                json = "{\"data\":{\"test\":\"Hello World\"}}"
+        )
     }
 
-    @Test
-    fun `reports validation errors`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(Pair("query", "{ test, unknownOne, unknownTwo }"))
-            method = HttpMethod.Get
-        }) {
+    describe("it reports validation errors") {
+        val call = getRequest {
+            uri = urlString("query" to "{ test, unknownOne, unknownTwo }")
+        }
 
-            assertEquals(expected = HttpStatusCode.BadRequest, actual = response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
+        testResponse(call,
+                code = HttpStatusCode.BadRequest,
+                json = """
                     {
                       "errors": [
                         {
@@ -118,25 +107,20 @@ class GraphQLRouteGetTest {
                         }
                       ]
                     }
-                    """),
-                    actual = response.content
-            )
-
-        }
+                    """)
     }
 
-    @Test
-    fun `errors when missing the operation name`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(Pair("query", """
-                query TestQuery { test }
-                mutation TestMutation { writeTest { test } }
-              """))
-            method = HttpMethod.Get
-        }) {
-            assertEquals(expected = HttpStatusCode.BadRequest, actual = response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("errors when missing the operation name") {
+        testResponse(
+                call = getRequest {
+                    uri = urlString("query" to """
+                            query TestQuery { test }
+                            mutation TestMutation { writeTest { test } }
+                          """
+                    )
+                },
+                code = HttpStatusCode.BadRequest,
+                json = """
                         {
                           "errors": [
                             {
@@ -144,23 +128,17 @@ class GraphQLRouteGetTest {
                             }
                           ]
                         }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `errors when sending a mutation via a GET`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(Pair("query", """
-                mutation TestMutation { writeTest { test } }
-            """))
-            method = HttpMethod.Get
-        }) {
-            assertEquals(expected = HttpStatusCode.MethodNotAllowed, actual = response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("errors when sending a mutation via GET") {
+        testResponse(
+                call = getRequest {
+                    uri = urlString("query" to "mutation TestMutation { writeTest { test } }")
+                },
+                code = HttpStatusCode.MethodNotAllowed,
+                json = """
                         {
                             "errors": [
                                 {
@@ -168,209 +146,51 @@ class GraphQLRouteGetTest {
                                 }
                             ]
                         }
-                    """),
-                    actual = response.content
-            )
-
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `errors when selecting a mutation via a GET`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(
-                    Pair("operationName", "TestMutation"),
-                    Pair("query", """
-                        query TestQuery { test }
-                        mutation TestMutation { writeTest { test } }
-                    """)
-            )
-            method = HttpMethod.Get
-        }) {
-            assertEquals(
-                    expected = HttpStatusCode.MethodNotAllowed,
-                    actual = response.status()
-            )
-
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("errors when selecting a mutation via a GET") {
+        testResponse(
+                call = getRequest {
+                    uri = urlString(
+                            "operationName" to "TestMutation",
+                            "query" to """
+                                    query TestQuery { test }
+                                    mutation TestMutation { writeTest { test } }
+                                """
+                    )
+                },
+                code = HttpStatusCode.MethodNotAllowed,
+                json = """
                         {
                             "errors": [{
                                 "message": "Can only perform a mutation operation from a POST request."
                             }]
                         }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `allows a mutation to exist within a GET`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(
-                    Pair("operationName", "TestQuery"),
-                    Pair("query", """
-                        mutation TestMutation { writeTest { test } }
-                        query TestQuery { test }
-                    """)
-            )
-            method = HttpMethod.Get
-        }) {
-            assertEquals(
-                    expected = HttpStatusCode.OK,
-                    actual = response.status()
-            )
-
-            assertEquals(
-                    expected = removeWhitespace("""
+    describe("allows a mutation to exists within a GET") {
+        testResponse(
+                call = getRequest {
+                    uri = urlString(
+                            "operationName" to "TestQuery",
+                            "query" to """
+                                    mutation TestMutation { writeTest { test } }
+                                    query TestQuery { test }
+                                """
+                    )
+                },
+                json = """
                         {
                           "data": {
                             "test": "Hello World"
                           }
                         }
-                    """),
-                    actual = response.content
-            )
-        }
+                    """
+        )
     }
 
-    @Test
-    fun `allows passing in a context`() = withTestApplication {
-        application.routing {
-            graphQL(urlString(), schema) {
-                config {
-                    context = "testValue"
-                }
-            }
-        }
-        with(handleRequest {
-            uri = urlString(
-                    Pair("operationName", "TestQuery"),
-                    Pair("query", "query TestQuery { context }")
-            )
-            method = HttpMethod.Get
-        }) {
-            assertEquals(
-                    expected = HttpStatusCode.OK,
-                    actual = response.status()
-            )
-            assertEquals(
-                    expected = removeWhitespace("""
-                        {
-                          "data": {
-                            "context": "testValue"
-                          }
-                        }
-                    """),
-                    actual = response.content
-            )
-        }
-    }
-
-    @Test
-    fun `allows passing in a root value`() = withTestApplication {
-        application.routing {
-            graphQL(urlString(), schema) {
-                config {
-                    rootValue = "testValue"
-                }
-            }
-        }
-        with(handleRequest {
-            uri = urlString(
-                    Pair("operationName", "TestQuery"),
-                    Pair("query", "query TestQuery { rootValue }")
-            )
-            method = HttpMethod.Get
-        }) {
-            assertEquals(
-                    expected = HttpStatusCode.OK,
-                    actual = response.status()
-            )
-            assertEquals(
-                    expected = removeWhitespace("""
-                        {
-                          "data": {
-                            "rootValue": "testValue"
-                          }
-                        }
-                    """),
-                    actual = response.content
-            )
-        }
-    }
-
-    @Test
-    fun `it provides a setup function with arguments`() = withTestApplication {
-        var requestInSetupFn: GraphQLRequest? = null
-
-        application.routing {
-            graphQL(urlString(), schema) { request ->
-                requestInSetupFn = request
-                config {
-                    context = "testValue"
-                }
-            }
-
-        }
-
-        with(handleRequest {
-            uri = urlString(Pair("query", "{ test }"))
-            method = HttpMethod.Get
-        }) {
-            assertEquals(
-                    expected = GraphQLRequest(query = "{ test }"),
-                    actual = requestInSetupFn
-            )
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(expected = "{\"data\":{\"test\":\"Hello World\"}}", actual = response.content)
-        }
-    }
-
-    @Test
-    fun `it catches errors thrown from the setup function`() = withTestApplication {
-        application.routing {
-            graphQL(urlString(), schema) {
-                throw Exception("Something went wrong")
-            }
-
-        }
-
-        with(handleRequest {
-            uri = urlString(Pair("query", "{ test }"))
-            method = HttpMethod.Get
-        }) {
-            assertEquals(expected = HttpStatusCode.InternalServerError, actual = response.status())
-            assertEquals(expected = removeWhitespace("""
-                {
-                    "errors": [{ "message": "Something went wrong" }]
-                }
-                """), actual = response.content)
-        }
-    }
-
-    @Test
-    fun `it allows for performing multiple requests that are slow simultaneously`() = withTestApplication(Application::testGraphQLRoute) {
-
-        fun TestApplicationCall.assert() {
-//            assertEquals(expected = io.ktor.http.HttpStatusCode.OK, actual = response.status())
-            assertEquals(expected = "{\"data\":{\"slow\":\"hello\"}}", actual = response.content)
-        }
-
-        runBlocking {
-            val deferred = (0 until 2).map {
-                GlobalScope.async {
-                    handleRequest {
-                        uri = urlString(Pair("query", "{ slow }"))
-                        method = HttpMethod.Get
-                    }
-                }
-
-            }
-
-            deferred.awaitAll().forEach { it.assert() }
-        }
-
-    }
-}
+})

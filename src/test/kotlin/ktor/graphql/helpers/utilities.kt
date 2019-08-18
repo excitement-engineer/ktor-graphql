@@ -1,5 +1,6 @@
-package graphQLRoute
+package ktor.graphql.helpers
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.http.formUrlEncode
 
 /**
@@ -12,9 +13,10 @@ fun removeWhitespace(text: String): String {
 fun urlString(vararg queryParams: Pair<String, String>): String {
     var route = "/graphql"
     if (queryParams.isNotEmpty()) {
-        route +="?${queryParams.toList().formUrlEncode()}"
+        route += "?${queryParams.toList().formUrlEncode()}"
     }
     return route
 }
 
-fun stringify(vararg queryParams: Pair<String, String>): String = queryParams.toList().formUrlEncode()
+
+fun Map<String, Any>.toJsonString(): String = jacksonObjectMapper().writeValueAsString(this)

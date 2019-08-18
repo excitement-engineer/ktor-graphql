@@ -1,199 +1,289 @@
 package ktor.graphql
 
-import graphQLRoute.removeWhitespace
-import graphQLRoute.urlString
-import io.ktor.application.Application
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.setBody
-import io.ktor.server.testing.withTestApplication
-import org.junit.Test
-import kotlin.test.assertEquals
+import ktor.graphql.helpers.*
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
-class GraphQLRoutePostTest {
+object PostTest : Spek({
 
-    @Test
-    fun `allows POST with JSON encoding`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString()
-            setBody("""
-                {
-                	"query": "\n  query IntrospectionQuery {\n    __schema {\n      queryType { name }\n      mutationType { name }\n      types {\n        ...FullType\n      }\n      directives {\n        name\n        description\n        locations\n        args {\n          ...InputValue\n        }\n      }\n    }\n  }\n\n  fragment FullType on __Type {\n    kind\n    name\n    description\n    fields(includeDeprecated: true) {\n      name\n      description\n      args {\n        ...InputValue\n      }\n      type {\n        ...TypeRef\n      }\n      isDeprecated\n      deprecationReason\n    }\n    inputFields {\n      ...InputValue\n    }\n    interfaces {\n      ...TypeRef\n    }\n    enumValues(includeDeprecated: true) {\n      name\n      description\n      isDeprecated\n      deprecationReason\n    }\n    possibleTypes {\n      ...TypeRef\n    }\n  }\n\n  fragment InputValue on __InputValue {\n    name\n    description\n    type { ...TypeRef }\n    defaultValue\n  }\n\n  fragment TypeRef on __Type {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n                ofType {\n                  kind\n                  name\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n"
+    describe("allows POST with JSON encoding") {
+
+        val query = """
+        query IntrospectionQuery {
+             __schema {
+                queryType {
+                    name
                 }
-            """)
-            addHeader(HttpHeaders.ContentType, "application/json")
-            method = HttpMethod.Post
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-
-        }
-    }
-
-    @Test
-    fun `allows sending a mutation via POST`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString()
-            setBody("""
-            {
-                "query": "mutation TestMutation { writeTest { test } }"
+                mutationType {
+                    name
+                }
+                types {
+                    ...FullType
+                }
+                directives {
+                    name
+                    description
+                    locations
+                    args {
+                        ...InputValue
+                    }
+                }
             }
-            """)
-            method = HttpMethod.Post
-            addHeader(HttpHeaders.ContentType, "application/json")
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
-                    {
-                        "data": {
-                            "writeTest":{
-                                "test":"Hello World"
+        }
+
+        fragment FullType on __Type {
+            kind
+            name
+            description
+            fields(includeDeprecated: true) {
+                name
+                description
+                args {
+                    ...InputValue
+                }
+                type {
+                    ...TypeRef
+                }
+                isDeprecated
+                deprecationReason
+            }
+            inputFields {
+                ...InputValue
+            }
+            interfaces {
+                ...TypeRef
+            }
+            enumValues(includeDeprecated: true) {
+                  name
+                  description
+                  isDeprecated
+                  deprecationReason
+              }
+              possibleTypes {
+                ...TypeRef
+              }
+            }
+
+            fragment InputValue on __InputValue {
+                name
+                description
+                type {
+                    ...TypeRef
+                }
+                defaultValue
+            }
+
+            fragment TypeRef on __Type {
+                kind
+                name
+                ofType {
+                    kind
+                    name
+                    ofType {
+                        kind
+                        name
+                        ofType {
+                            kind
+                            name
+                            ofType {
+                                kind
+                                name
+                                ofType {
+                                    kind
+                                    name
+                                    ofType {
+                                        kind
+                                        name
+                                        ofType {
+                                            kind
+                                            name
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-                    """),
-                    actual = response.content
-            )
-        }
-    }
-
-    @Test
-    fun `supports POST JSON query with JSON variables`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString()
-            setBody("""
-            {
-                "query": "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }",
-                "variables": {"who": "Dolly"}
+                }
             }
-            """)
-            method = HttpMethod.Post
-            addHeader(HttpHeaders.ContentType, "application/json")
+        """
 
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
-                    {
-                        "data": {
-                            "test":"Hello Dolly"
-                        }
-                    }
-                    """),
-                    actual = response.content
-            )
+        postJSONRequest {
+            setJsonBody("query" to query)
+        }.response.run {
+            testCode(this)
         }
     }
 
-    @Test
-    fun `supports POST JSON with GET variable values`() = withTestApplication(Application::testGraphQLRoute){
-        with(handleRequest {
-            uri= urlString(Pair("variables", """
-                    {
-                        "who": "Dolly"
-                    }
-                    """
-            ))
-            setBody("""
-            {
-                "query": "query helloWho(${"$"}who: String){ test(who: ${"$"}who) }"
+    describe("allows sending a mutation via POST") {
+
+        val mutation = """
+            mutation TestMutation {
+                writeTest {
+                    test
+                }
             }
-            """)
-            addHeader(HttpHeaders.ContentType, "application/json")
-            method = HttpMethod.Post
+        """
 
-        }) {
-            assertEquals(expected = HttpStatusCode.OK, actual = response.status())
-            assertEquals(
-                    expected = removeWhitespace("""
-                    {
-                        "data": {
-                            "test":"Hello Dolly"
-                        }
-                    }
-                    """),
-                    actual = response.content
-            )
-        }
-    }
-
-    @Test
-    fun `allows POST with operation name`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString()
-            setBody("""
-            {
-                "query": "\n query helloYou { test(who: \"You\") }\n query helloWorld { test(who: \"World\") }\n",
-                "operationName": "helloWorld"
-}
-            """)
-            addHeader(HttpHeaders.ContentType, "application/json")
-            method = HttpMethod.Post
-        }) {
-            assertEquals(
-                    expected = removeWhitespace("""
-                    {
-                        "data": {
+        testResponse(
+                call = postJSONRequest {
+                    setJsonBody("query" to mutation)
+                },
+                json = """
+                {
+                    "data": {
+                        "writeTest":{
                             "test":"Hello World"
                         }
                     }
-                    """),
-                    actual = response.content
-            )
-        }
+                }
+            """
+        )
     }
 
-    @Test
-    fun `allows POST with GET operation name`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(Pair("operationName", "helloWorld"))
-            setBody("""
-            {
-                "query": "\n query helloYou { test(who: \"You\") }\n query helloWorld { test(who: \"World\") }\n"
+    describe("support POST JSON query with JSON variables") {
+
+        val query = """
+            query helloWho(${"$"}who: String) {
+                test(who: ${"$"}who)
             }
-            """)
-            addHeader(HttpHeaders.ContentType, "application/json")
-            method = HttpMethod.Post
-        }) {
-            assertEquals(
-                    expected = removeWhitespace("""
-                    {
-                        "data": {
-                            "test":"Hello World"
-                        }
-                    }
-                    """),
-                    actual = response.content
-            )
-        }
-    }
+        """
 
-    @Test
-    fun `supports POST raw text query with GET variable values`() = withTestApplication(Application::testGraphQLRoute) {
-        with(handleRequest {
-            uri = urlString(
-            Pair("variables", """
-                    {
-                        "who": "Dolly"
-                    }
-                    """
-            ),
-            Pair("operationName", "helloWho"))
-            setBody("query helloWho(${"$"}who: String){ test(who: ${"$"}who) }")
-            method = HttpMethod.Post
-            addHeader(HttpHeaders.ContentType, "application/graphql")
-        }) {
-            assertEquals(
-                expected = removeWhitespace("""
+        val variables = mapOf(
+                "who" to "Dolly"
+        )
+
+        testResponse(
+                call = postJSONRequest {
+                    setJsonBody(
+                            "query" to query,
+                            "variables" to variables
+                    )
+                },
+                json = """
                 {
                     "data": {
                         "test":"Hello Dolly"
                     }
                 }
-                """),
-                actual = response.content
-            )
-        }
+                """
+        )
     }
-}
+
+    describe("support POST JSON with GET variable values") {
+
+        val variables = """
+            {
+                "who": "Dolly"
+            }
+            """
+
+        val query = """
+            query helloWho(${"$"}who: String){
+                test(who: ${"$"}who)
+            }
+        """
+
+        testResponse(
+                call = postJSONRequest {
+                    uri = urlString("variables" to variables)
+
+                    setJsonBody("query" to query)
+                },
+                json = """
+                {
+                    "data": {
+                        "test":"Hello Dolly"
+                    }
+                }
+                """
+        )
+    }
+
+    describe("allows POST with operation name") {
+
+        val query = """
+             query helloYou {
+                test(who: "You")
+             }
+             query helloWorld {
+                test(who: "World")
+             }
+          """
+
+        testResponse(
+                call = postJSONRequest {
+                    setJsonBody(
+                            "query" to query,
+                            "operationName" to "helloWorld"
+                    )
+                },
+                json = """
+            {
+                "data": {
+                    "test":"Hello World"
+                }
+            }
+            """
+        )
+    }
+
+    describe("allows POST with GET operation name") {
+
+        val query = """
+            query helloYou {
+                test(who: "You")
+            }
+            query helloWorld {
+                test(who: "World")
+            }
+        """
+
+        testResponse(
+                call = postJSONRequest {
+                    uri = urlString(Pair("operationName", "helloWorld"))
+                    setJsonBody("query" to query)
+                },
+                json = """
+                    {
+                        "data": {
+                            "test":"Hello World"
+                        }
+                    }
+                """
+        )
+    }
+
+    describe("supports POST raw text query with GET variable values") {
+
+        val query = """
+            query helloWho(${"$"}who: String){
+                test(who: ${"$"}who)
+            }
+        """.trimIndent()
+
+        testResponse(
+                call = postRequest {
+                    uri = urlString(
+                            "variables" to """
+                                {
+                                    "who": "Dolly"
+                                }
+                            """,
+                            "operationName" to "helloWho"
+                    )
+                    setBody(query)
+                    addHeader(HttpHeaders.ContentType, "application/graphql")
+                },
+                json = """
+                {
+                    "data": {
+                        "test":"Hello Dolly"
+                    }
+                }
+                """
+        )
+    }
+
+})
