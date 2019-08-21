@@ -134,7 +134,7 @@ internal class RequestHandler(
                 .operationName(request.operationName)
                 .context(config.context)
                 .root(config.rootValue)
-                .variables(request.variables)
+                .variables(request.variables ?: emptyMap())
                 .build()
 
         return GraphQL
