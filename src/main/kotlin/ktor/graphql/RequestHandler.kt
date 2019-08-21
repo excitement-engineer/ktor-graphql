@@ -129,12 +129,13 @@ internal class RequestHandler(
 
     private fun performRequest(): ExecutionResult {
 
-        val executionInput = ExecutionInput(
-                request.query,
-                request.operationName,
-                config.context,
-                config.rootValue,
-                request.variables)
+        val executionInput = ExecutionInput.newExecutionInput()
+                .query(request.query)
+                .operationName(request.operationName)
+                .context(config.context)
+                .root(config.rootValue)
+                .variables(request.variables)
+                .build()
 
         return GraphQL
                 .newGraphQL(schema)
