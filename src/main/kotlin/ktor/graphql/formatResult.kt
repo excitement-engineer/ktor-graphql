@@ -22,14 +22,19 @@ internal fun formatResult(
     if (errors.isNotEmpty()) {
 
         val outputError = errors.map {
-            formatError?.invoke(it) ?: it.toSpecification()
+            val res  = formatError?.invoke(it) ?: it.toSpecification()
+
+            res.toMutableMap().apply {
+                remove("extensions")
+            }
+
         }
         responseMap["errors"] = outputError
     }
 
-    if (executionResult.extensions != null) {
-        responseMap["extensions"] = executionResult.extensions
-    }
+//    if (executionResult.extensions != null) {
+//        responseMap["extensions"] = executionResult.extensions
+//    }
 
     return responseMap
 }

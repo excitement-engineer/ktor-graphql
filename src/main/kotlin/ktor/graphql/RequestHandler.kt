@@ -4,6 +4,7 @@ import graphql.*
 import graphql.execution.UnknownOperationException
 import graphql.language.Document
 import graphql.language.OperationDefinition
+import graphql.language.SourceLocation
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
 import graphql.validation.Validator
@@ -19,10 +20,12 @@ import io.ktor.response.header
 import io.ktor.response.respondText
 import io.ktor.util.pipeline.PipelineContext
 import ktor.graphql.parseRequest.parseGraphQLRequest
+import org.antlr.v4.runtime.RecognitionException
+
 
 internal class RequestHandler(
-    private val schema: GraphQLSchema,
-    private val setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> GraphQLRouteConfig)?
+        private val schema: GraphQLSchema,
+        private val setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> GraphQLRouteConfig)?
 ) {
 
     private lateinit var request: GraphQLRequest
@@ -129,12 +132,13 @@ internal class RequestHandler(
 
     private fun performRequest(): ExecutionResult {
 
-        val executionInput = ExecutionInput(
-                request.query,
-                request.operationName,
-                config.context,
-                config.rootValue,
-                request.variables)
+        val executionInput = ExecutionInput.newExecutionInput()
+                .query(request.query)
+                .operationName(request.operationName)
+                .context(config.context)
+                .root(config.rootValue)
+                .variables(request.variables ?: emptyMap())
+                .build()
 
         return GraphQL
                 .newGraphQL(schema)
@@ -178,7 +182,8 @@ internal class RequestHandler(
         return try {
             getOperation(document, request.operationName)
         } catch (exception: UnknownOperationException) {
-            throw HttpException(HttpStatusCode.BadRequest, HttpGraphQLError(exception.message ?: "Unknown operation name"))
+            throw HttpException(HttpStatusCode.BadRequest, HttpGraphQLError(exception.message
+                    ?: "Unknown operation name"))
         }
     }
 
@@ -203,7 +208,7 @@ internal class RequestHandler(
         return try {
             Parser().parseDocument(query)
         } catch (exception: Exception) {
-            val syntaxError = InvalidSyntaxError.toInvalidSyntaxError(exception)
+            val syntaxError = toInvalidSyntaxError(exception)
             throw HttpException(HttpStatusCode.BadRequest, syntaxError)
         }
     }
@@ -213,7 +218,7 @@ internal class RequestHandler(
             // If `raw` exists, GraphiQL mode is not enabled.
             // Allowed to show GraphiQL if not requested as raw and this request
             // prefers HTML over JSON.
-            val htmlText =  HeaderValue("text/html")
+            val htmlText = HeaderValue("text/html")
             val jsonText = HeaderValue("application/json")
 
             val isRawRequest = call.parameters["raw"] != null
@@ -234,4 +239,15 @@ internal class RequestHandler(
 
             return acceptItems[0] == htmlText
         }
+}
+
+fun toInvalidSyntaxError(exception: Exception): InvalidSyntaxError {
+    var msg = exception.message
+    var sourceLocation: SourceLocation? = null
+    if (exception.cause is RecognitionException) {
+        val recognitionException = exception.cause as RecognitionException
+        msg = recognitionException.message
+        sourceLocation = SourceLocation(recognitionException.offendingToken.line, recognitionException.offendingToken.charPositionInLine)
+    }
+    return InvalidSyntaxError(sourceLocation, msg)
 }
