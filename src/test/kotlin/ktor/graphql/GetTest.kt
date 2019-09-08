@@ -18,7 +18,7 @@ object GetTest : Spek({
 
         testResponse(
                 call,
-                json = "{\"data\":{\"test\":\"Hello World\"}}"
+                json = "{\"data\":{\"test\":\"Hello Wor\"}}"
         )
     }
 
