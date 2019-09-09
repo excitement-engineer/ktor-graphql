@@ -4,7 +4,7 @@ import graphql.*
 import graphql.execution.UnknownOperationException
 import graphql.language.Document
 import graphql.language.OperationDefinition
-import graphql.language.SourceLocation
+import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
 import graphql.validation.Validator
@@ -20,7 +20,6 @@ import io.ktor.response.header
 import io.ktor.response.respondText
 import io.ktor.util.pipeline.PipelineContext
 import ktor.graphql.parseRequest.parseGraphQLRequest
-import org.antlr.v4.runtime.RecognitionException
 
 
 internal class RequestHandler(
@@ -207,9 +206,8 @@ internal class RequestHandler(
     private fun parse(query: String): Document {
         return try {
             Parser().parseDocument(query)
-        } catch (exception: Exception) {
-            val syntaxError = toInvalidSyntaxError(exception)
-            throw HttpException(HttpStatusCode.BadRequest, syntaxError)
+        } catch (exception: InvalidSyntaxException) {
+            throw HttpException(HttpStatusCode.BadRequest, exception.toInvalidSyntaxError())
         }
     }
 
@@ -239,15 +237,4 @@ internal class RequestHandler(
 
             return acceptItems[0] == htmlText
         }
-}
-
-fun toInvalidSyntaxError(exception: Exception): InvalidSyntaxError {
-    var msg = exception.message
-    var sourceLocation: SourceLocation? = null
-    if (exception.cause is RecognitionException) {
-        val recognitionException = exception.cause as RecognitionException
-        msg = recognitionException.message
-        sourceLocation = SourceLocation(recognitionException.offendingToken.line, recognitionException.offendingToken.charPositionInLine)
-    }
-    return InvalidSyntaxError(sourceLocation, msg)
 }

@@ -144,8 +144,8 @@ object ErrorHandlingTest : Spek({
                     {
                         "errors": [
                             {
-                                "message": "Invalid Syntax",
-                                "locations": [{ "line": 1, "column": 0 }]
+                                "message": "Invalid Syntax : offending token 'synxtaxerror' at line 1 column 1",
+                                "locations": [{ "line": 1, "column": 1 }]
                             }
                         ]
                     }
