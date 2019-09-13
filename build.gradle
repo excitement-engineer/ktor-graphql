@@ -40,7 +40,6 @@ dependencies {
     testCompile "junit:junit:4.11"
     testCompile "io.ktor:ktor-server-test-host:$ktor_version"
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
-    testCompile "com.graphql-java:graphql-java-tools:3.2.0"
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
     testRuntimeOnly "org.spekframework.spek2:spek-runner-junit5:$spek_version"
 }
