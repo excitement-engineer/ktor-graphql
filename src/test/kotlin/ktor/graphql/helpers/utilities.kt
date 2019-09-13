@@ -1,6 +1,9 @@
 package ktor.graphql.helpers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import graphql.schema.GraphQLArgument
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLObjectType
 import io.ktor.http.formUrlEncode
 
 /**
@@ -20,3 +23,11 @@ fun urlString(vararg queryParams: Pair<String, String>): String {
 
 
 fun Map<String, Any>.toJsonString(): String = jacksonObjectMapper().writeValueAsString(this)
+
+fun GraphQLObjectType.Builder.Field(builderFunction: GraphQLFieldDefinition.Builder.() -> GraphQLFieldDefinition.Builder) = field {
+    builderFunction.invoke(it)
+}
+
+fun GraphQLFieldDefinition.Builder.Argument(builderFunction: GraphQLArgument.Builder.() -> GraphQLArgument.Builder) = argument {
+    builderFunction.invoke(it)
+}
