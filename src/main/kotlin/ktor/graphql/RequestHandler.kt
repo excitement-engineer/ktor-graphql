@@ -4,6 +4,8 @@ import graphql.*
 import graphql.execution.UnknownOperationException
 import graphql.language.Document
 import graphql.language.OperationDefinition
+import graphql.language.SourceLocation
+import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
 import graphql.validation.Validator
@@ -19,6 +21,7 @@ import io.ktor.response.header
 import io.ktor.response.respondText
 import io.ktor.util.pipeline.PipelineContext
 import ktor.graphql.parseRequest.parseGraphQLRequest
+import org.antlr.v4.runtime.RecognitionException
 
 internal class RequestHandler(
     private val schema: GraphQLSchema,
@@ -100,6 +103,7 @@ internal class RequestHandler(
     }
 
     private fun handleException(exception: Exception): ExecutionResultData {
+
         val httpException = parseException(exception)
 
         call.response.status(httpException.statusCode)
@@ -129,17 +133,20 @@ internal class RequestHandler(
 
     private fun performRequest(): ExecutionResult {
 
-        val executionInput = ExecutionInput(
-                request.query,
-                request.operationName,
-                config.context,
-                config.rootValue,
-                request.variables)
+        val executionInput = ExecutionInput.newExecutionInput()
+                .query(request.query)
+                .operationName(request.operationName)
+                .context(config.context)
+                .root(config.rootValue)
+                .variables(request.variables ?: emptyMap())
+                .build()
 
-        return GraphQL
+        val result = GraphQL
                 .newGraphQL(schema)
                 .build()
                 .execute(executionInput)
+
+        return result
 
     }
 
@@ -200,10 +207,11 @@ internal class RequestHandler(
     }
 
     private fun parse(query: String): Document {
+
         return try {
             Parser().parseDocument(query)
-        } catch (exception: Exception) {
-            val syntaxError = InvalidSyntaxError.toInvalidSyntaxError(exception)
+        } catch (exception: InvalidSyntaxException) {
+            val syntaxError = exception.toInvalidSyntaxError()
             throw HttpException(HttpStatusCode.BadRequest, syntaxError)
         }
     }
@@ -234,4 +242,15 @@ internal class RequestHandler(
 
             return acceptItems[0] == htmlText
         }
+}
+
+fun toInvalidSyntaxError(exception: Exception): InvalidSyntaxError {
+    var msg = exception.message
+    var sourceLocation: SourceLocation? = null
+    if (exception.cause is InvalidSyntaxException) {
+        val recognitionException = exception.cause as RecognitionException
+        msg = recognitionException.message
+        sourceLocation = SourceLocation(recognitionException.offendingToken.line, recognitionException.offendingToken.charPositionInLine)
+    }
+    return InvalidSyntaxError(sourceLocation, msg)
 }

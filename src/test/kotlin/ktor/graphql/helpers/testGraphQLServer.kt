@@ -7,6 +7,7 @@ import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.util.pipeline.PipelineContext
 import ktor.graphql.GraphQLRequest
 import ktor.graphql.GraphQLRouteConfig
+import ktor.graphql.config
 import ktor.graphql.graphQL
 
 fun TestApplicationEngine.testGraphQLServer(
