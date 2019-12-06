@@ -1,6 +1,6 @@
 package ktor.graphql
 
-const val GRAPHIQL_VERSION = "0.11.11"
+const val GRAPHIQL_VERSION = "0.17.2"
 const val JS_UNDEFINED = "undefined"
 
 internal fun renderGraphiQL(data: Map<String, Any?>?, request: GraphQLRequest): String {
