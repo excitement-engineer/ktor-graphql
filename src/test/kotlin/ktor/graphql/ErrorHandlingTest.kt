@@ -88,11 +88,11 @@ object ErrorHandlingTest : Spek({
         withTestApplication {
             testGraphQLServer {
                 config {
-                    formatError = {
-                        val message = if (this is ExceptionWhileDataFetching) {
-                            exception.message
+                    formatError = { error ->
+                        val message = if (error is ExceptionWhileDataFetching) {
+                            error.exception.message
                         } else {
-                            message
+                            error.message
                         }
                         mapOf(
                                 Pair("message", "Custom error format: $message")
@@ -108,10 +108,10 @@ object ErrorHandlingTest : Spek({
         withTestApplication {
             testGraphQLServer {
                 config {
-                    formatError = {
+                    formatError = { error ->
                         mapOf(
-                                Pair("message", message),
-                                Pair("locations", GraphqlErrorHelper.locations(locations)),
+                                Pair("message", error.message),
+                                Pair("locations", GraphqlErrorHelper.locations(error.locations)),
                                 Pair("stack", "stack trace")
                         )
                     }
@@ -261,8 +261,8 @@ object ErrorHandlingTest : Spek({
         withTestApplication {
             testGraphQLServer {
                 config {
-                    formatError = {
-                        mapOf(Pair("message", "Custom error format: ${this.message}"))
+                    formatError = { error ->
+                        mapOf(Pair("message", "Custom error format: ${error.message}"))
                     }
                 }
             }

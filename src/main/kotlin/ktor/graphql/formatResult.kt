@@ -4,7 +4,7 @@ import graphql.GraphQLError
 
 internal fun formatResult(
         resultData: ExecutionResultData,
-        formatError: (GraphQLError.() -> Map<String, Any>)?
+        formatError: (GraphQLError.() -> Map<String, Any>)
 ): Map<String, Any?>? {
 
     val executionResult = resultData.result
@@ -21,9 +21,8 @@ internal fun formatResult(
 
     if (errors.isNotEmpty()) {
 
-        val outputError = errors.map {
-            formatError?.invoke(it) ?: it.toSpecification()
-        }
+        val outputError = errors.map { error -> formatError(error) }
+
         responseMap["errors"] = outputError
     }
 
