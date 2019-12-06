@@ -84,5 +84,9 @@ val mutationType = newObject()
         .build()
 
 
-val schema = GraphQLSchema(queryType, mutationType, emptySet())
+val schema = GraphQLSchema.newSchema()
+        .query(queryType)
+        .mutation(mutationType)
+        .build()
+
 
