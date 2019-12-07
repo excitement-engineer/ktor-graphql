@@ -4,8 +4,8 @@ group 'com.github.excitement-engineer'
 version versionNo
 
 buildscript {
-    ext.kotlin_version = '1.3.31'
-    ext.ktor_version = '1.1.1'
+    ext.kotlin_version = '1.3.61'
+    ext.ktor_version = '1.2.6'
     ext.spek_version = '2.0.5'
 
     repositories {
