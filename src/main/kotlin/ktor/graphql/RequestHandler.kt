@@ -1,10 +1,12 @@
 package ktor.graphql
 
-import graphql.*
+import graphql.ExecutionInput
+import graphql.ExecutionResult
+import graphql.ExecutionResultImpl
+import graphql.GraphQL
 import graphql.execution.UnknownOperationException
 import graphql.language.Document
 import graphql.language.OperationDefinition
-import graphql.language.SourceLocation
 import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
@@ -21,7 +23,6 @@ import io.ktor.response.header
 import io.ktor.response.respondText
 import io.ktor.util.pipeline.PipelineContext
 import ktor.graphql.parseRequest.parseGraphQLRequest
-import org.antlr.v4.runtime.RecognitionException
 
 internal class RequestHandler(
     private val schema: GraphQLSchema,
@@ -115,16 +116,13 @@ internal class RequestHandler(
 
     private suspend fun sendResponse(result: ExecutionResultData?) {
 
-        val formattedResult = if (result != null) formatResult(result, config.formatError) else null
+        val formattedResult = result?.formatResult(config.formatError)
 
         if (showGraphiQL) {
             call.respondText(renderGraphiQL(formattedResult, request), ContentType.Text.Html)
 
         } else {
-
-            if (formattedResult == null) {
-                throw Exception("Internal error, result can only be null if GraphiQL is requested")
-            }
+            requireNotNull(formattedResult) { "Internal error, result can only be null if GraphiQL is requested" }
 
             val jsonResponse = mapper.writeValueAsString(formattedResult)
             call.respondText(jsonResponse, ContentType.Application.Json)
@@ -242,15 +240,4 @@ internal class RequestHandler(
 
             return acceptItems[0] == htmlText
         }
-}
-
-fun toInvalidSyntaxError(exception: Exception): InvalidSyntaxError {
-    var msg = exception.message
-    var sourceLocation: SourceLocation? = null
-    if (exception.cause is InvalidSyntaxException) {
-        val recognitionException = exception.cause as RecognitionException
-        msg = recognitionException.message
-        sourceLocation = SourceLocation(recognitionException.offendingToken.line, recognitionException.offendingToken.charPositionInLine)
-    }
-    return InvalidSyntaxError(sourceLocation, msg)
 }

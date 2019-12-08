@@ -1,7 +1,7 @@
 package ktor.graphql
 
-const val GRAPHIQL_VERSION = "0.17.2"
-const val JS_UNDEFINED = "undefined"
+private const val GRAPHIQL_VERSION = "0.17.2"
+private const val JS_UNDEFINED = "undefined"
 
 internal fun renderGraphiQL(data: Map<String, Any?>?, request: GraphQLRequest): String {
 
@@ -129,7 +129,7 @@ internal fun renderGraphiQL(data: Map<String, Any?>?, request: GraphQLRequest): 
     return value
 }
 
-fun serializeToJavascriptString(data: String?): String {
+private fun serializeToJavascriptString(data: String?): String {
     return if (data == null) {
         JS_UNDEFINED
     } else {
@@ -138,7 +138,7 @@ fun serializeToJavascriptString(data: String?): String {
     }
 }
 
-fun serializeToJavascriptJson(data: String?): String {
+private fun serializeToJavascriptJson(data: String?): String {
     return if (data == null) {
         JS_UNDEFINED
     } else {
@@ -147,9 +147,9 @@ fun serializeToJavascriptJson(data: String?): String {
     }
 }
 
-fun safeSerialize(data: String) = data.replace("/", "\\/")
+private fun safeSerialize(data: String) = data.replace("/", "\\/")
 
-fun convertToJSONString(data: Map<String, Any?>?): String? {
+private fun convertToJSONString(data: Map<String, Any?>?): String? {
     return if (data == null) {
         null
     } else {
