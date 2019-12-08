@@ -123,8 +123,10 @@ depending on whether the original exception is a `ClientException` or not.
 ```
 graphQL("/graphql", schema) {
     config {
-        formatError = {
-            val clientMessage = if (this is ExceptionWhileDataFetching) {
+        formatError = { error ->
+            val clientMessage = if (error is ExceptionWhileDataFetching) {
+
+                val exception = error.exception
 
                 val formattedMessage = if (exception is ClientException) {
                     exception.message
@@ -134,10 +136,10 @@ graphQL("/graphql", schema) {
 
                 formattedMessage
             } else {
-                message
+                error.message
             }
 
-            val result = toSpecification()
+            val result = error.toSpecification()
             result["message"] = clientMessage
 
             result
