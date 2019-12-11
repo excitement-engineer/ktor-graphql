@@ -1,4 +1,4 @@
-def versionNo = '0.2.4'
+def versionNo = '1.0.0'
 
 group 'com.github.excitement-engineer'
 version versionNo
