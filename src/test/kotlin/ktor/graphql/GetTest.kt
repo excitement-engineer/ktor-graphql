@@ -94,7 +94,10 @@ object GetTest : Spek({
                               "line": 1,
                               "column": 9
                             }
-                          ]
+                          ],
+                          "extensions": {
+                            "classification": "ValidationError"
+                          }
                         },
                         {
                           "message": "Validation error of type FieldUndefined: Field 'unknownTwo' in type 'Query' is undefined @ 'unknownTwo'",
@@ -103,7 +106,10 @@ object GetTest : Spek({
                               "line": 1,
                               "column": 21
                             }
-                          ]
+                          ],
+                          "extensions": {
+                            "classification": "ValidationError"
+                          }
                         }
                       ]
                     }

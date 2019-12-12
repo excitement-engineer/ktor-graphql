@@ -82,7 +82,7 @@ private fun getOperationName(bodyNode: JsonNode): String? {
     }
 }
 
-fun jsonEncodedParser(body: String): JsonNode {
+private fun jsonEncodedParser(body: String): JsonNode {
 
     if (jsonObjRegex.containsMatchIn(body)) {
 
@@ -104,4 +104,4 @@ fun jsonEncodedParser(body: String): JsonNode {
  *     x0A  Line feed or New line
  *     x0D  Carriage return
  */
-val jsonObjRegex = "^[\\x20\\x09\\x0a\\x0d]*\\{".toRegex()
+private val jsonObjRegex = "^[\\x20\\x09\\x0a\\x0d]*\\{".toRegex()

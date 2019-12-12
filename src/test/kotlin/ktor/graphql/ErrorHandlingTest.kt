@@ -49,7 +49,10 @@ object ErrorHandlingTest : Spek({
                         {
                             "message": "Exception while fetching data (/thrower) : Throws!",
                             "locations":[{"line":1,"column":3}],
-                            "path":["thrower"]
+                            "path":["thrower"],
+                            "extensions": {
+                                "classification": "DataFetchingException"
+                            }
                         }
                     ]
                 }
@@ -70,7 +73,10 @@ object ErrorHandlingTest : Spek({
                                 {
                                     "message":"Exception while fetching data (/nonNullThrower) : Throws!",
                                     "locations":[{"line":1,"column":3}],
-                                    "path":["nonNullThrower"]
+                                    "path":["nonNullThrower"],
+                                    "extensions": {
+                                        "classification": "DataFetchingException"
+                                    }
                                 }
                             ]
                         }
@@ -82,11 +88,11 @@ object ErrorHandlingTest : Spek({
         withTestApplication {
             testGraphQLServer {
                 config {
-                    formatError = {
-                        val message = if (this is ExceptionWhileDataFetching) {
-                            exception.message
+                    formatError = { error ->
+                        val message = if (error is ExceptionWhileDataFetching) {
+                            error.exception.message
                         } else {
-                            message
+                            error.message
                         }
                         mapOf(
                                 Pair("message", "Custom error format: $message")
@@ -102,10 +108,10 @@ object ErrorHandlingTest : Spek({
         withTestApplication {
             testGraphQLServer {
                 config {
-                    formatError = {
+                    formatError = { error ->
                         mapOf(
-                                Pair("message", message),
-                                Pair("locations", GraphqlErrorHelper.locations(locations)),
+                                Pair("message", error.message),
+                                Pair("locations", GraphqlErrorHelper.locations(error.locations)),
                                 Pair("stack", "stack trace")
                         )
                     }
@@ -137,15 +143,18 @@ object ErrorHandlingTest : Spek({
     describe("handles syntax errors caught by GraphQL") {
         testResponse(
                 call = getRequest {
-                    uri = urlString("query" to "synxtaxerror")
+                    uri = urlString("query" to "syntaxerror")
                 },
                 code = HttpStatusCode.BadRequest,
                 json = """
                     {
                         "errors": [
                             {
-                                "message": "Invalid Syntax",
-                                "locations": [{ "line": 1, "column": 0 }]
+                                "message": "Invalid Syntax : offending token 'syntaxerror' at line 1 column 1",
+                                "locations": [{ "line": 1, "column": 1 }],
+                                "extensions": { 
+                                    "classification": "InvalidSyntax"
+                                }
                             }
                         ]
                     }
@@ -252,8 +261,8 @@ object ErrorHandlingTest : Spek({
         withTestApplication {
             testGraphQLServer {
                 config {
-                    formatError = {
-                        mapOf(Pair("message", "Custom error format: ${this.message}"))
+                    formatError = { error ->
+                        mapOf(Pair("message", "Custom error format: ${error.message}"))
                     }
                 }
             }
@@ -301,7 +310,10 @@ object ErrorHandlingTest : Spek({
                         "locations": [{
                             "line": 1,
                             "column": 16
-                        }]
+                        }],
+                        "extensions": {
+                            "classification": "ValidationError"
+                        }
                     }]
                 }
                 """
