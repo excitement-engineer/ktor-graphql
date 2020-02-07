@@ -2,24 +2,26 @@ package ktor.graphql.parseRequest
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.readValue
-import ktor.graphql.GraphQLRequest
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import ktor.graphql.GraphQLRequest
 import ktor.graphql.HttpException
 import ktor.graphql.HttpGraphQLError
 import ktor.graphql.mapper
 
-private val graphQLContentType = ContentType.parse("application/graphql")
+private val applicationContentType = "application"
+private val graphQLContentSubType = "graphql"
+private val jsonContentSubType = "json"
 
 internal fun parseBody(body: String, contentType: ContentType): GraphQLRequest {
 
-    if (body.isBlank()) {
+    if (body.isBlank() || contentType.contentType != applicationContentType) {
         return GraphQLRequest()
     }
 
-    return when(contentType) {
-        graphQLContentType -> requestGraphQL(body)
-        ContentType.Application.Json -> requestJson(body)
+    return when (contentType.contentSubtype) {
+        graphQLContentSubType -> requestGraphQL(body)
+        jsonContentSubType -> requestJson(body)
         else -> GraphQLRequest()
     }
 }
@@ -39,9 +41,9 @@ private fun requestJson(body: String): GraphQLRequest {
     val operationName = getOperationName(bodyNode)
 
     return GraphQLRequest(
-        query = query,
-        operationName = operationName,
-        variables = variables
+            query = query,
+            operationName = operationName,
+            variables = variables
     )
 }
 
@@ -54,7 +56,7 @@ private fun getQuery(bodyNode: JsonNode): String? {
 }
 
 private fun getVariables(bodyNode: JsonNode): Map<String, Any>? {
-    return if(bodyNode.has("variables")) {
+    return if (bodyNode.has("variables")) {
         val variablesNode = bodyNode.get("variables")
 
         if (!variablesNode.isNull) {
@@ -70,7 +72,7 @@ private fun getVariables(bodyNode: JsonNode): Map<String, Any>? {
 private fun getOperationName(bodyNode: JsonNode): String? {
     return if (bodyNode.has("operationName")) {
 
-        val operationNameNode= bodyNode.get("operationName")
+        val operationNameNode = bodyNode.get("operationName")
 
         if (operationNameNode.isNull) {
             null
