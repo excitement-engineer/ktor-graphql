@@ -306,7 +306,7 @@ object ErrorHandlingTest : Spek({
                 {
                     "data": null,
                     "errors": [{
-                        "message": "Variable 'value' has an invalid value. Expected type 'Boolean' but was 'ArrayList'.",
+                        "message": "Variable 'value' has an invalid value : Expected type 'Boolean' but was 'ArrayList'.",
                         "locations": [{
                             "line": 1,
                             "column": 16
