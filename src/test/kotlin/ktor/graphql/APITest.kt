@@ -21,48 +21,7 @@ object APITest : Spek({
 
         testGraphQLServer { request ->
             requestInSetupFunction = request
-            config {
-                context = "testValue"
-                rootValue = "testValue"
-            }
-        }
-
-        describe("allows passing in a context") {
-            testResponse(
-                    call = handleRequest {
-                        uri = urlString(
-                                "operationName" to "TestQuery",
-                                "query" to "query TestQuery { context }"
-                        )
-                    },
-                    json = """
-                            {
-                              "data": {
-                                "context": "testValue"
-                              }
-                            }
-                        """
-            )
-
-        }
-
-        describe("allows passing in a root value") {
-
-            testResponse(
-                    call = handleRequest {
-                        uri = urlString(
-                                "operationName" to "TestQuery",
-                                "query" to "query TestQuery { rootValue }"
-                        )
-                    },
-                    json = """
-                            {
-                              "data": {
-                                "rootValue": "testValue"
-                              }
-                            }
-                        """
-            )
+            GraphQLRouteConfig()
         }
 
         describe("it provides a setup function with arguments") {

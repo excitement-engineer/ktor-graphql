@@ -139,8 +139,6 @@ internal class RequestHandler(
             val executionInput = ExecutionInput.newExecutionInput()
                     .query(request.query)
                     .operationName(request.operationName)
-                    .context(config.context)
-                    .root(config.rootValue)
                     .variables(request.variables ?: emptyMap())
                     .build()
 
