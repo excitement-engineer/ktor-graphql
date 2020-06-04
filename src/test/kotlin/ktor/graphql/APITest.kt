@@ -21,7 +21,7 @@ object APITest : Spek({
 
         testGraphQLServer { request ->
             requestInSetupFunction = request
-            GraphQLRouteConfig()
+            Config()
         }
 
         describe("it provides a setup function with arguments") {
@@ -67,9 +67,7 @@ object APITest : Spek({
         withTestApplication {
 
             testGraphQLServer {
-                config {
-                    executionResult = ExecutionResultImpl(mapOf("hello" to "world"), null, null)
-                }
+                Config(executionResult = ExecutionResultImpl(mapOf("hello" to "world"), null, null))
             }
 
             describe("allows passing in the execution result") {

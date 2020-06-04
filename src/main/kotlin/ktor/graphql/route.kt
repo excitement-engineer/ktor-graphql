@@ -11,7 +11,7 @@ import io.ktor.util.pipeline.PipelineContext
 fun Route.graphQL(
     path: String,
     schema: GraphQLSchema,
-    setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> GraphQLRouteConfig)? = null
+    setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> Config)? = null
 ): Route {
 
     val graphQLRoute: suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit = {

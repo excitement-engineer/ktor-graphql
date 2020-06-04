@@ -1,4 +1,7 @@
-package ktor.graphql
+package ktor.graphql.explorer
+
+import ktor.graphql.GraphQLRequest
+import ktor.graphql.mapper
 
 private const val GRAPHIQL_VERSION = "0.17.2"
 private const val JS_UNDEFINED = "undefined"
@@ -36,12 +39,12 @@ internal fun renderGraphiQL(data: Map<String, Any?>?, request: GraphQLRequest): 
         height: 100vh;
     }
     </style>
-    <link href="//cdn.jsdelivr.net/npm/graphiql@${GRAPHIQL_VERSION}/graphiql.css" rel="stylesheet" />
+    <link href="//cdn.jsdelivr.net/npm/graphiql@$GRAPHIQL_VERSION/graphiql.css" rel="stylesheet" />
     <script src="//cdn.jsdelivr.net/es6-promise/4.0.5/es6-promise.auto.min.js"></script>
     <script src="//cdn.jsdelivr.net/fetch/0.9.0/fetch.min.js"></script>
     <script src="//cdn.jsdelivr.net/react/15.4.2/react.min.js"></script>
     <script src="//cdn.jsdelivr.net/react/15.4.2/react-dom.min.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/graphiql@${GRAPHIQL_VERSION}/graphiql.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/graphiql@$GRAPHIQL_VERSION/graphiql.min.js"></script>
     </head>
     <body>
     <div id="graphiql">Loading...</div>

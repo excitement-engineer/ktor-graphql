@@ -87,18 +87,17 @@ object ErrorHandlingTest : Spek({
     describe("allows for custom error formatting to sanitize") {
         withTestApplication {
             testGraphQLServer {
-                config {
-                    formatError = { error ->
-                        val message = if (error is ExceptionWhileDataFetching) {
-                            error.exception.message
-                        } else {
-                            error.message
-                        }
-                        mapOf(
-                                Pair("message", "Custom error format: $message")
-                        )
+                Config(formatError = { error ->
+                    val message = if (error is ExceptionWhileDataFetching) {
+                        error.exception.message
+                    } else {
+                        error.message
                     }
+                    mapOf(
+                            Pair("message", "Custom error format: $message")
+                    )
                 }
+                )
             }
         }
     }
@@ -107,15 +106,14 @@ object ErrorHandlingTest : Spek({
 
         withTestApplication {
             testGraphQLServer {
-                config {
-                    formatError = { error ->
-                        mapOf(
-                                Pair("message", error.message),
-                                Pair("locations", GraphqlErrorHelper.locations(error.locations)),
-                                Pair("stack", "stack trace")
-                        )
-                    }
+                Config(formatError = { error ->
+                    mapOf(
+                            Pair("message", error.message),
+                            Pair("locations", GraphqlErrorHelper.locations(error.locations)),
+                            Pair("stack", "stack trace")
+                    )
                 }
+                )
             }
 
             testResponse(
@@ -260,11 +258,10 @@ object ErrorHandlingTest : Spek({
     describe("allows for custom error formatting of poorly formed requests") {
         withTestApplication {
             testGraphQLServer {
-                config {
-                    formatError = { error ->
-                        mapOf(Pair("message", "Custom error format: ${error.message}"))
-                    }
+                Config(formatError = { error ->
+                    mapOf(Pair("message", "Custom error format: ${error.message}"))
                 }
+                )
             }
 
             testResponse(
@@ -319,6 +316,5 @@ object ErrorHandlingTest : Spek({
                 """
         )
     }
-
 })
 

@@ -26,18 +26,18 @@ import ktor.graphql.parseRequest.parseGraphQLRequest
 
 internal class RequestHandler(
     private val schema: GraphQLSchema,
-    private val setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> GraphQLRouteConfig)?
+    private val setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> Config)?
 ) {
 
     private lateinit var request: GraphQLRequest
-    private var config = GraphQLRouteConfig()
+    private var config = Config()
 
     private lateinit var context: PipelineContext<Unit, ApplicationCall>
     private val call: ApplicationCall
         get() = context.call
 
     private val showGraphiQL: Boolean
-        get() = config.graphiql && canDisplayGraphiQL
+        get() = config.showExplorer && canDisplayGraphiQL
 
     suspend fun doRequest(requestContext: PipelineContext<Unit, ApplicationCall>) {
         context = requestContext
@@ -119,8 +119,7 @@ internal class RequestHandler(
         val formattedResult = result?.formatResult(config.formatError)
 
         if (showGraphiQL) {
-            call.respondText(renderGraphiQL(formattedResult, request), ContentType.Text.Html)
-
+            call.respondText(config.renderExplorer(formattedResult), ContentType.Text.Html)
         } else {
             requireNotNull(formattedResult) { "Internal error, result can only be null if GraphiQL is requested" }
 
@@ -149,7 +148,7 @@ internal class RequestHandler(
     }
 
     private fun resolveConfig(request: GraphQLRequest) {
-        config = setup?.invoke(context, request) ?: GraphQLRouteConfig()
+        config = setup?.invoke(context, request) ?: Config()
     }
 
     // If no data was included in the result, that indicates a runtime query
