@@ -1,5 +1,6 @@
 package ktor.graphql
 
+import graphql.ExecutionResultImpl
 import io.ktor.server.testing.withTestApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -102,6 +103,26 @@ object APITest : Spek({
                 }
             }
         }
+
+
+        withTestApplication {
+
+            testGraphQLServer {
+                config {
+                    executionResult = ExecutionResultImpl(mapOf("hello" to "world"), null, null)
+                }
+            }
+
+            describe("allows passing in the execution result") {
+                testResponse(
+                        call = handleRequest {
+                            uri = urlString("query" to "{ test }")
+                        },
+                        json = "{\"data\":{\"hello\":\"world\"}}"
+                )
+            }
+        }
+
     }
 })
 

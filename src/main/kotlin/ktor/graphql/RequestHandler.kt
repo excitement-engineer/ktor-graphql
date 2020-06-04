@@ -131,21 +131,23 @@ internal class RequestHandler(
 
     private fun performRequest(): ExecutionResult {
 
-        val executionInput = ExecutionInput.newExecutionInput()
-                .query(request.query)
-                .operationName(request.operationName)
-                .context(config.context)
-                .root(config.rootValue)
-                .variables(request.variables ?: emptyMap())
-                .build()
+        val result = config.executionResult
 
-        val result = GraphQL
-                .newGraphQL(schema)
-                .build()
-                .execute(executionInput)
+        return if (result != null) {
+            result
+        } else {
+            val executionInput = ExecutionInput.newExecutionInput()
+                    .query(request.query)
+                    .operationName(request.operationName)
+                    .context(config.context)
+                    .root(config.rootValue)
+                    .variables(request.variables ?: emptyMap())
+                    .build()
 
-        return result
-
+            GraphQL.newGraphQL(schema)
+                    .build()
+                    .execute(executionInput)
+        }
     }
 
     private fun resolveConfig(request: GraphQLRequest) {
