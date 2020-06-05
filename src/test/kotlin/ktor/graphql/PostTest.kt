@@ -109,11 +109,11 @@ object PostTest : Spek({
             }
         """
 
-        postJSONRequest {
+        val call = postJSONRequest {
             setJsonBody("query" to query)
-        }.response.run {
-            testCode(this)
         }
+
+        testCode(call.response)
     }
 
     describe("allows sending a mutation via POST") {

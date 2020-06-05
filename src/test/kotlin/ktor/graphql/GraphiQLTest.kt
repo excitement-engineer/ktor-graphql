@@ -4,6 +4,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.request.uri
+import io.ktor.routing.Routing
 import io.ktor.server.testing.*
 import ktor.graphql.helpers.*
 import org.spekframework.spek2.Spek
@@ -51,7 +52,6 @@ object GraphiQLTest : Spek({
                     contentType = "application/json; charset=UTF-8"
             )
         }
-
 
         describe("does not render explorer if no opt-in") {
 
@@ -181,7 +181,7 @@ object GraphiQLTest : Spek({
 
                 req.response
             }
-            
+
             response.assertExplorerResponse()
         }
     }
