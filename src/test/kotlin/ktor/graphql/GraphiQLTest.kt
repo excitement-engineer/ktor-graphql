@@ -3,6 +3,7 @@ package ktor.graphql
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.request.uri
 import io.ktor.server.testing.*
 import ktor.graphql.helpers.*
 import org.spekframework.spek2.Spek
@@ -14,15 +15,16 @@ object GraphiQLTest : Spek({
 
     val explorerHTML = "Explorer HTML"
 
-    var dataInExplorer: Map<String, Any?>? = null
+    fun TestApplicationEngine.explorerRequest(uri: String) = handleRequest {
+        method = HttpMethod.Get
+        addHeader(HttpHeaders.Accept, "text/html")
+        this.uri = uri
+    }
 
     fun TestApplicationEngine.explorerServer() = testGraphQLServer {
         Config(
                 showExplorer = true,
-                renderExplorer = { data ->
-                    dataInExplorer = data
-                    explorerHTML
-                }
+                renderExplorer = { data -> explorerHTML }
         )
     }
 
@@ -33,6 +35,7 @@ object GraphiQLTest : Spek({
             method = HttpMethod.Get
             addHeader(HttpHeaders.Accept, "text/html")
             callback(this)
+
         }
     }
 
@@ -57,45 +60,67 @@ object GraphiQLTest : Spek({
         }
 
         describe("presents explorer when accepting HTML") {
-            val call = explorerRequest {
-                uri = urlString("query" to "{test}")
-            }
 
-            call.response.run {
-
-                assertExplorerResponse()
-                val content = content!!
-
-                it("renders") {
-                    assertContains(content, explorerHTML)
+            var queryData: Map<String, Any?>? = null
+            val response = withTestApplication {
+                testGraphQLServer {
+                    Config(
+                            showExplorer = true,
+                            renderExplorer = { data ->
+                                queryData = data
+                                explorerHTML
+                            }
+                    )
                 }
 
+                val req = explorerRequest(urlString("query" to "{test}"))
 
+                req.response
+            }
+
+            response.assertExplorerResponse()
+
+            it("renders") {
+                assertContains(response.content!!, explorerHTML)
             }
 
             it("passes the data") {
                 assertEquals(
                         expected = mapOf("data" to mapOf("test" to "Hello World")),
-                        actual = dataInExplorer
+                        actual = queryData
                 )
             }
         }
 
 
         describe("GraphiQL accepts a mutation query - does not execute it") {
-            explorerRequest {
-                uri = urlString(
-                        Pair("query", "mutation TestMutation { writeTest { test } }")
-                )
-            }.response.run {
-                assertExplorerResponse()
 
-                it("renders") {
-                    assertEquals(explorerHTML, content)
+            var mutationData: Map<String, Any?>? = null
+            val response = withTestApplication {
+                testGraphQLServer {
+                    Config(
+                            showExplorer = true,
+                            renderExplorer = { data ->
+                                mutationData = data
+                                explorerHTML
+                            }
+                    )
                 }
-                it("contains an empty response") {
-                    assertNull(dataInExplorer)
-                }
+
+                val req = explorerRequest(urlString(
+                        Pair("query", "mutation TestMutation { writeTest { test } }")
+                ))
+
+                req.response
+            }
+
+            response.assertExplorerResponse()
+
+            it("renders") {
+                assertEquals(explorerHTML, response.content)
+            }
+            it("contains an empty response") {
+                assertNull(mutationData)
             }
         }
 
