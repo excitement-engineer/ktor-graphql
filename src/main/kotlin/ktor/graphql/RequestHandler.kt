@@ -36,8 +36,8 @@ internal class RequestHandler(
     private val call: ApplicationCall
         get() = context.call
 
-    private val showGraphiQL: Boolean
-        get() = config.showExplorer && canDisplayGraphiQL
+    private val showExplorer: Boolean
+        get() = config.showExplorer && canDisplayExplorer
 
     suspend fun doRequest(requestContext: PipelineContext<Unit, ApplicationCall>) {
         context = requestContext
@@ -69,7 +69,7 @@ internal class RequestHandler(
 
         if (query == null) {
 
-            if (showGraphiQL) {
+            if (showExplorer) {
                 return null
             }
 
@@ -83,7 +83,7 @@ internal class RequestHandler(
         val operation = getOperation(document)
 
         if (isMutationInGetRequest(operation)) {
-            if (showGraphiQL) {
+            if (showExplorer) {
                 return null
             }
             call.response.header("Allow", "POST")
@@ -118,7 +118,7 @@ internal class RequestHandler(
 
         val formattedResult = result?.formatResult(config.formatError)
 
-        if (showGraphiQL) {
+        if (showExplorer) {
             call.respondText(config.renderExplorer(formattedResult), ContentType.Text.Html)
         } else {
             requireNotNull(formattedResult) { "Internal error, result can only be null if GraphiQL is requested" }
@@ -213,10 +213,10 @@ internal class RequestHandler(
         }
     }
 
-    private val canDisplayGraphiQL: Boolean
+    private val canDisplayExplorer: Boolean
         get() {
-            // If `raw` exists, GraphiQL mode is not enabled.
-            // Allowed to show GraphiQL if not requested as raw and this request
+            // If `raw` exists, Explorer mode is not enabled.
+            // Allowed to show Explorer if not requested as raw and this request
             // prefers HTML over JSON.
             val htmlText =  HeaderValue("text/html")
             val jsonText = HeaderValue("application/json")
