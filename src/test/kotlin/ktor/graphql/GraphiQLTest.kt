@@ -15,74 +15,68 @@ object GraphiQLTest : Spek({
 
     val explorerHTML = "Explorer HTML"
 
-    fun TestApplicationEngine.explorerRequest(uri: String) = handleRequest {
+    fun TestApplicationEngine.explorerRequest(cb: (TestApplicationRequest.() -> Unit)) = handleRequest {
         method = HttpMethod.Get
         addHeader(HttpHeaders.Accept, "text/html")
-        this.uri = uri
+        cb(this)
     }
 
-    fun TestApplicationEngine.explorerServer() = testGraphQLServer {
+    fun TestApplicationEngine.explorerServer(cb: (data: Map<String, Any?>?) -> Unit = {}) = testGraphQLServer {
         Config(
                 showExplorer = true,
-                renderExplorer = { data -> explorerHTML }
+                renderExplorer = { data ->
+                    cb(data)
+                    explorerHTML
+                }
         )
     }
 
-    fun <R> explorerRequest(callback: TestApplicationRequest.() -> R) = withTestApplication {
-        explorerServer()
-
-        handleRequest {
-            method = HttpMethod.Get
-            addHeader(HttpHeaders.Accept, "text/html")
-            callback(this)
-
-        }
-    }
+    val testQueryURI = urlString("query" to "{test}")
 
     describe("Explorer tests") {
 
         fun TestApplicationResponse.assertExplorerResponse(code: HttpStatusCode = HttpStatusCode.OK) {
             testCode(this, code)
             testContentType(this, "text/html; charset=UTF-8")
+
+            it("renders the html") {
+                assertEquals(explorerHTML, content)
+            }
         }
+
+        fun TestApplicationCall.assertJSONTestQuery() {
+            testResponse(
+                    this,
+                    json = "{\"data\":{\"test\":\"Hello World\"}}",
+                    contentType = "application/json; charset=UTF-8"
+            )
+        }
+
 
         describe("does not render explorer if no opt-in") {
 
             val call = getRequest {
-                uri = urlString("query" to " { test } ")
+                uri = testQueryURI
                 addHeader(HttpHeaders.Accept, "text/html")
             }
-            testResponse(
-                    call = call,
-                    json = "{\"data\":{\"test\":\"Hello World\"}}",
-                    contentType = "application/json; charset=UTF-8"
-            )
+
+            call.assertJSONTestQuery()
         }
 
         describe("presents explorer when accepting HTML") {
 
             var queryData: Map<String, Any?>? = null
             val response = withTestApplication {
-                testGraphQLServer {
-                    Config(
-                            showExplorer = true,
-                            renderExplorer = { data ->
-                                queryData = data
-                                explorerHTML
-                            }
-                    )
-                }
+                explorerServer { data -> queryData = data }
 
-                val req = explorerRequest(urlString("query" to "{test}"))
+                val req = explorerRequest {
+                    uri = testQueryURI
+                }
 
                 req.response
             }
 
             response.assertExplorerResponse()
-
-            it("renders") {
-                assertContains(response.content!!, explorerHTML)
-            }
 
             it("passes the data") {
                 assertEquals(
@@ -97,59 +91,37 @@ object GraphiQLTest : Spek({
 
             var mutationData: Map<String, Any?>? = null
             val response = withTestApplication {
-                testGraphQLServer {
-                    Config(
-                            showExplorer = true,
-                            renderExplorer = { data ->
-                                mutationData = data
-                                explorerHTML
-                            }
-                    )
+                explorerServer { data ->
+                    mutationData = data
                 }
 
-                val req = explorerRequest(urlString(
-                        Pair("query", "mutation TestMutation { writeTest { test } }")
-                ))
+                val req = explorerRequest {
+                    uri = urlString("query" to "mutation TestMutation { writeTest { test } }")
+                }
 
                 req.response
             }
 
             response.assertExplorerResponse()
 
-            it("renders") {
-                assertEquals(explorerHTML, response.content)
-            }
             it("contains an empty response") {
                 assertNull(mutationData)
             }
         }
 
         describe("returns HTML if preferred") {
-            withTestApplication {
+            val response = withTestApplication {
                 explorerServer()
 
-                handleRequest {
-                    uri = urlString("query" to "{test}")
+                val req = handleRequest {
+                    uri = testQueryURI
                     addHeader(HttpHeaders.Accept, "text/html,application/json")
                 }
+
+                req.response
             }
 
-            explorerRequest {
-                uri = urlString("query" to "{test}")
-            }.response.run {
-                assertExplorerResponse()
-                it("contain the graphiql js file") {
-                    assertEquals(content, explorerHTML)
-                }
-            }
-        }
-
-        fun TestApplicationCall.assertJSONTestQuery() {
-            testResponse(
-                    this,
-                    json = "{\"data\":{\"test\":\"Hello World\"}}",
-                    contentType = "application/json; charset=UTF-8"
-            )
+            response.assertExplorerResponse()
         }
 
         describe("returns JSON if preferred") {
@@ -157,7 +129,7 @@ object GraphiQLTest : Spek({
                 explorerServer()
 
                 handleRequest {
-                    uri = urlString("query" to "{test}")
+                    uri = testQueryURI
                     addHeader(HttpHeaders.Accept, "application/json,text/html")
                 }
             }.assertJSONTestQuery()
@@ -168,7 +140,7 @@ object GraphiQLTest : Spek({
                 explorerServer()
 
                 handleRequest {
-                    uri = urlString("query" to "{test}")
+                    uri = testQueryURI
                     addHeader(HttpHeaders.Accept, "unknown")
                 }
             }.assertJSONTestQuery()
@@ -199,22 +171,18 @@ object GraphiQLTest : Spek({
         }
 
         describe("prefers html even if the first accept header is different") {
-            withTestApplication {
+            val response = withTestApplication {
                 explorerServer()
 
-                handleRequest {
-                    uri = urlString(
-                            "query" to "{test}"
-                    )
+                val req = handleRequest {
+                    uri = testQueryURI
                     addHeader(HttpHeaders.Accept, "image/jpeg,text/html,application/json")
                 }
-            }.response.run {
-                assertExplorerResponse()
-                it("contains the expected response") {
-                    assertEquals(content, explorerHTML)
-                }
+
+                req.response
             }
+            
+            response.assertExplorerResponse()
         }
     }
-
 })
