@@ -21,11 +21,6 @@ fun TestApplicationEngine.testGraphQLServer(
 
 fun Application.testGraphQLRoute() {
     routing {
-        graphQL(urlString(), schema) { req ->
-            Config(
-                    showExplorer = true,
-                    renderExplorer = { data -> renderGraphiQL(data, req) }
-            )
-        }
+        graphQL(urlString(), schema)
     }
 }

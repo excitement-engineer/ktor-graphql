@@ -130,15 +130,13 @@ internal class RequestHandler(
 
     private fun performRequest(): ExecutionResult {
 
-        val result = config.executionResult
+        val customeExecuteFn = config.executeRequest
 
-        return if (result != null) {
-            result
+        return if (customeExecuteFn != null) {
+            customeExecuteFn()
         } else {
             val executionInput = ExecutionInput.newExecutionInput()
-                    .query(request.query)
-                    .operationName(request.operationName)
-                    .variables(request.variables ?: emptyMap())
+                    .fromRequest(request)
                     .build()
 
             GraphQL.newGraphQL(schema)

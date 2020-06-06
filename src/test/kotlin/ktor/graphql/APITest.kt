@@ -67,7 +67,11 @@ object APITest : Spek({
         withTestApplication {
 
             testGraphQLServer {
-                Config(executionResult = ExecutionResultImpl(mapOf("hello" to "world"), null, null))
+                Config(
+                        executeRequest = {
+                            ExecutionResultImpl(mapOf("hello" to "world"), null, null)
+                        }
+                )
             }
 
             describe("allows passing in the execution result") {

@@ -30,14 +30,12 @@ Add the `graphQL` route inside of Ktor's `routing` feature:
 
 ```
 val server = embeddedServer(Netty, port = 8080) {
-        routing {
-            graphQL("/graphql", schema) {
-                config {
-                    graphiql = true
-                }
-            }
+    routing {
+        graphQL("/graphql", schema) { request ->
+            Config(showExplorer = true)
         }
     }
+}
 
 server.start(wait = true)
 ``` 
@@ -47,16 +45,19 @@ The `graphQL` route has two required parameters:
 - The path associated with the graphQL endpoint.
 - A graphQL schema (see [GraphQL-Java](https://github.com/graphql-java/graphql-java)).
 
-Optionally, various options can be passed in a `config`.
+Optionally, various options can be passed in a `Config` in the trailing callback. The callback is invoked every time that a request
+is executed against the server.
 
-## Options
+## Configuration
 
-The `config` accepts the following options:
+The `Config` class accepts the following parameters:
 
-* `graphiql`: If true, then `GraphiQL` is presented when the graphQL endpoint is loaded in the browser. This is useful for testing your application during development.
-* `rootValue`: A value passed as the root value in GraphQL-Java's `ExecutionInput` from [`graphql.ExecutionInput`](https://github.com/graphql-java/graphql-java/blob/master/src/main/java/graphql/ExecutionInput.java).
-* `context` A value passed as the context in in GraphQL-Java's `ExecutionInput` from [`graphql.ExecutionInput`](https://github.com/graphql-java/graphql-java/blob/master/src/main/java/graphql/ExecutionInput.java).
+* `showExplorer`: If true, then a [GraphQL-playground](https://github.com/prisma-labs/graphql-playground) is presented when the graphQL endpoint is loaded in the browser. This is useful for testing your application during development.
 * `formatError`: An optional function that it is used to format any errors that occur in completing a GraphQL operation. If not provided, GraphQL's default spec-compliant [`GraphQLError.toSpecification()`](https://github.com/graphql-java/graphql-java/blob/master/src/main/java/graphql/GraphQLError.java) is used.
+* `executeRequest`: A custom function for executing queries against your schema. 
+* `renderExplorer`: A function to render a custom graphql explorer. The default is Graphql-Playground however this library also contains a way for rendering 
+GraphiQL (see `ktor.graphql.explorer.graphiQL`).
+
 
 # HTTP usage
 
@@ -65,7 +66,7 @@ The `config` accepts the following options:
 * `query`: A string GraphQL document to be executed.
 * `variables`: The runtime values to use for any GraphQL query variables as a JSON object.
 * `operationName`: If the provided query contains multiple named operations, this specifies which operation should be executed. If not provided, a 400 error will be returned if the query contains multiple named operations.
-* `raw`: If the `graphiql` option is enabled and the raw parameter is provided raw JSON will always be returned instead of GraphiQL even when loaded from a browser.
+* `raw`: If the `showExplorer` option is enabled and the raw parameter is provided raw JSON will always be returned instead of the GraphQL explorer even when loaded from a browser.
 
 GraphQL will first look for each parameter in the URL's query-string:
 
@@ -81,6 +82,37 @@ If not found in the query-string, it will look in the POST request body.
 * `application/graphql`: the POST body will be parsed as GraphQL query string, which provides the query parameter.
 
 ## Guides
+
+### Passing a root value or context
+
+In order to pass a context when executing a query against the schema we can use the `executeRequest` option of the `Config`.
+ 
+```
+
+val graphQL = GraphQL.newGraphQL(schema).build()
+
+val server = embeddedServer(Netty, port = 8080) {
+    routing {
+        graphQL("/graphql", schema) { request ->
+            Config(
+                executeRequest = {
+                    val input = ExecutionInput.newExecutionInput()
+                            .fromRequest(request)
+                            .context(yourContent)
+                            .root(yourRootValue)
+                            .build()
+
+                    graphQL.execute(input)
+                }
+            )
+        }
+    }
+}
+
+server.start(wait = true)
+``` 
+
+You can also pass a [dataLoader](https://www.graphql-java.com/documentation/v12/batching/) instance into `ExecutionInput`.
 
 ### Masking exceptions
 

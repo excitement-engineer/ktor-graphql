@@ -5,10 +5,12 @@ import graphql.GraphQLError
 import ktor.graphql.explorer.renderPlayground
 
 typealias RenderExplorer = (data: Map<String, Any?>?) -> String
+typealias ExecuteRequest = (() -> ExecutionResult)
+typealias FormatError =  ((GraphQLError) -> Map<String, Any>)
 
 data class Config(
-        val formatError: ((GraphQLError) -> Map<String, Any>) = { it.toSpecification() },
+        val formatError: FormatError = { it.toSpecification() },
         val showExplorer: Boolean = false,
-        val executionResult: ExecutionResult? = null,
+        val executeRequest: ExecuteRequest? = null,
         val renderExplorer: RenderExplorer = { renderPlayground() }
 )
