@@ -134,7 +134,7 @@ depending on whether the original exception is a `ClientException` or not.
 
 ```
 graphQL("/graphql", schema) {
-    config {
+    Config(
         formatError = { error ->
             val clientMessage = if (error is ExceptionWhileDataFetching) {
 
@@ -156,7 +156,7 @@ graphQL("/graphql", schema) {
 
             result
         }
-    }
+    )
 }
 ```
 
