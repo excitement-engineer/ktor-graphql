@@ -1,22 +1,16 @@
 package ktor.graphql
 
+import graphql.ExecutionResult
 import graphql.GraphQLError
+import ktor.graphql.explorer.renderPlayground
 
-fun config(block: GraphQLRouteConfigBuilder.() -> Unit) = GraphQLRouteConfigBuilder().apply(block).build()
+typealias RenderExplorer = (data: Map<String, Any?>?) -> String
+typealias ExecuteRequest = (() -> ExecutionResult)
+typealias FormatError =  ((GraphQLError) -> Map<String, Any>)
 
-class GraphQLRouteConfigBuilder {
-    var context: Any? = null
-    var rootValue: Any? = null
-    var formatError: ((GraphQLError) -> Map<String, Any>) = { it.toSpecification() }
-    var graphiql: Boolean = false
-    internal fun build(): GraphQLRouteConfig {
-        return GraphQLRouteConfig(context, rootValue, formatError, graphiql)
-    }
-}
-
-data class GraphQLRouteConfig(
-        val context: Any? = null,
-        val rootValue: Any? = null,
-        val formatError: ((GraphQLError) -> Map<String, Any>) = { it.toSpecification() },
-        val graphiql: Boolean = false
+data class Config(
+        val formatError: FormatError = { it.toSpecification() },
+        val showExplorer: Boolean = false,
+        val executeRequest: ExecuteRequest? = null,
+        val renderExplorer: RenderExplorer = { renderPlayground() }
 )

@@ -26,18 +26,18 @@ import ktor.graphql.parseRequest.parseGraphQLRequest
 
 internal class RequestHandler(
     private val schema: GraphQLSchema,
-    private val setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> GraphQLRouteConfig)?
+    private val setup: (PipelineContext<Unit, ApplicationCall>.(GraphQLRequest) -> Config)?
 ) {
 
     private lateinit var request: GraphQLRequest
-    private var config = GraphQLRouteConfig()
+    private var config = Config()
 
     private lateinit var context: PipelineContext<Unit, ApplicationCall>
     private val call: ApplicationCall
         get() = context.call
 
-    private val showGraphiQL: Boolean
-        get() = config.graphiql && canDisplayGraphiQL
+    private val showExplorer: Boolean
+        get() = config.showExplorer && canDisplayExplorer
 
     suspend fun doRequest(requestContext: PipelineContext<Unit, ApplicationCall>) {
         context = requestContext
@@ -69,7 +69,7 @@ internal class RequestHandler(
 
         if (query == null) {
 
-            if (showGraphiQL) {
+            if (showExplorer) {
                 return null
             }
 
@@ -83,7 +83,7 @@ internal class RequestHandler(
         val operation = getOperation(document)
 
         if (isMutationInGetRequest(operation)) {
-            if (showGraphiQL) {
+            if (showExplorer) {
                 return null
             }
             call.response.header("Allow", "POST")
@@ -118,9 +118,8 @@ internal class RequestHandler(
 
         val formattedResult = result?.formatResult(config.formatError)
 
-        if (showGraphiQL) {
-            call.respondText(renderGraphiQL(formattedResult, request), ContentType.Text.Html)
-
+        if (showExplorer) {
+            call.respondText(config.renderExplorer(formattedResult), ContentType.Text.Html)
         } else {
             requireNotNull(formattedResult) { "Internal error, result can only be null if GraphiQL is requested" }
 
@@ -131,25 +130,23 @@ internal class RequestHandler(
 
     private fun performRequest(): ExecutionResult {
 
-        val executionInput = ExecutionInput.newExecutionInput()
-                .query(request.query)
-                .operationName(request.operationName)
-                .context(config.context)
-                .root(config.rootValue)
-                .variables(request.variables ?: emptyMap())
-                .build()
+        val customeExecuteFn = config.executeRequest
 
-        val result = GraphQL
-                .newGraphQL(schema)
-                .build()
-                .execute(executionInput)
+        return if (customeExecuteFn != null) {
+            customeExecuteFn()
+        } else {
+            val executionInput = ExecutionInput.newExecutionInput()
+                    .fromRequest(request)
+                    .build()
 
-        return result
-
+            GraphQL.newGraphQL(schema)
+                    .build()
+                    .execute(executionInput)
+        }
     }
 
     private fun resolveConfig(request: GraphQLRequest) {
-        config = setup?.invoke(context, request) ?: GraphQLRouteConfig()
+        config = setup?.invoke(context, request) ?: Config()
     }
 
     // If no data was included in the result, that indicates a runtime query
@@ -214,10 +211,10 @@ internal class RequestHandler(
         }
     }
 
-    private val canDisplayGraphiQL: Boolean
+    private val canDisplayExplorer: Boolean
         get() {
-            // If `raw` exists, GraphiQL mode is not enabled.
-            // Allowed to show GraphiQL if not requested as raw and this request
+            // If `raw` exists, Explorer mode is not enabled.
+            // Allowed to show Explorer if not requested as raw and this request
             // prefers HTML over JSON.
             val htmlText =  HeaderValue("text/html")
             val jsonText = HeaderValue("application/json")

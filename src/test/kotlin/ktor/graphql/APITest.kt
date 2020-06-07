@@ -1,5 +1,6 @@
 package ktor.graphql
 
+import graphql.ExecutionResultImpl
 import io.ktor.server.testing.withTestApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -20,48 +21,7 @@ object APITest : Spek({
 
         testGraphQLServer { request ->
             requestInSetupFunction = request
-            config {
-                context = "testValue"
-                rootValue = "testValue"
-            }
-        }
-
-        describe("allows passing in a context") {
-            testResponse(
-                    call = handleRequest {
-                        uri = urlString(
-                                "operationName" to "TestQuery",
-                                "query" to "query TestQuery { context }"
-                        )
-                    },
-                    json = """
-                            {
-                              "data": {
-                                "context": "testValue"
-                              }
-                            }
-                        """
-            )
-
-        }
-
-        describe("allows passing in a root value") {
-
-            testResponse(
-                    call = handleRequest {
-                        uri = urlString(
-                                "operationName" to "TestQuery",
-                                "query" to "query TestQuery { rootValue }"
-                        )
-                    },
-                    json = """
-                            {
-                              "data": {
-                                "rootValue": "testValue"
-                              }
-                            }
-                        """
-            )
+            Config()
         }
 
         describe("it provides a setup function with arguments") {
@@ -102,6 +62,28 @@ object APITest : Spek({
                 }
             }
         }
+
+
+        withTestApplication {
+
+            testGraphQLServer {
+                Config(
+                        executeRequest = {
+                            ExecutionResultImpl(mapOf("hello" to "world"), null, null)
+                        }
+                )
+            }
+
+            describe("allows passing in the execution result") {
+                testResponse(
+                        call = handleRequest {
+                            uri = urlString("query" to "{ test }")
+                        },
+                        json = "{\"data\":{\"hello\":\"world\"}}"
+                )
+            }
+        }
+
     }
 })
 
