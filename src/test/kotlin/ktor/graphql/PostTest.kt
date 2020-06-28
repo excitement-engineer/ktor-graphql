@@ -286,4 +286,32 @@ object PostTest : Spek({
         )
     }
 
+    describe("supports application/json POST with content-subtypes") {
+        val query = """
+            query helloWho(${"$"}who: String) {
+                test(who: ${"$"}who)
+            }
+        """
+
+        val variables = mapOf(
+                "who" to "Dolly"
+        )
+
+        testResponse(
+                call = postRequest {
+                    setJsonBody(
+                            "query" to query,
+                            "variables" to variables
+                    )
+                    addHeader(HttpHeaders.ContentType, "application/json; charset=UTF-8")
+                },
+                json = """
+                {
+                    "data": {
+                        "test":"Hello Dolly"
+                    }
+                }
+                """
+        )
+    }
 })
