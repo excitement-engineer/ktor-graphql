@@ -3,8 +3,11 @@ package ktor.graphql.parseRequest
 import ktor.graphql.GraphQLRequest
 import io.ktor.application.ApplicationCall
 import io.ktor.http.HttpStatusCode
+import io.ktor.request.contentCharset
 import io.ktor.request.contentType
+import io.ktor.request.receiveStream
 import io.ktor.request.receiveText
+import io.ktor.utils.io.charsets.Charset
 import ktor.graphql.HttpException
 import ktor.graphql.HttpGraphQLError
 
@@ -24,8 +27,7 @@ internal suspend fun parseGraphQLRequest(call: ApplicationCall): GraphQLRequest 
 }
 
 private suspend fun parseRequest(call: ApplicationCall): GraphQLRequest {
-
-    val body = call.receiveText()
+    val body = call.receiveStream().readBytes().toString(call.request.contentCharset() ?: Charsets.UTF_8)
     val contentType = call.request.contentType()
     val bodyRequest = parseBody(body, contentType)
 
