@@ -10,7 +10,7 @@ This project is hosted on jCenter.
 
 Add dependency:
 
-**Maven:**
+### Maven
 
 ```
 <dependency>
@@ -20,10 +20,14 @@ Add dependency:
 </dependency>
 ```
 
-**Gradle:** 
-
+### Gradle
+**build.gradle:**
 ```
 compile 'com.github.excitement-engineer:ktor-graphql:${version}'
+```
+**build.gradle.kts:**
+```
+implementation("com.github.excitement-engineer:ktor-graphql:${version}")
 ```
 
 ## Setup
