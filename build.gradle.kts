@@ -9,7 +9,7 @@ version = versionNo
 plugins {
     kotlin("jvm") version "1.4.21"
     `maven-publish`
-    id("com.jfrog.bintray") version "1.8.2"
+    id("com.jfrog.bintray") version "1.8.5"
 }
 
 repositories {
