@@ -7,7 +7,7 @@ version = versionNo
 
 
 plugins {
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.21"
     `maven-publish`
     id("com.jfrog.bintray") version "1.8.2"
 }
@@ -17,12 +17,11 @@ repositories {
     jcenter()
 }
 
-val ktor_version = "1.3.2"
-val spek_version = "2.0.5"
+val ktor_version = "1.5.1"
+val spek_version = "2.0.15"
 
 dependencies {
     compile("io.ktor:ktor-server-core:$ktor_version")
-    implementation(kotlin("stdlib-jdk8"))
     compile("com.graphql-java:graphql-java:14.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.4.1")
     implementation(kotlin("reflect"))
