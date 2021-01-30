@@ -306,4 +306,26 @@ object PostTest : Spek({
         )
     }
 
+    describe("it allows for setting the encoding by the client") {
+        testResponse(
+                call = postRequest {
+                    addHeader(HttpHeaders.ContentType, "application/json; charset=${Charsets.ISO_8859_1}")
+                    setJsonBody("query" to whoQuery,
+                            "variables" to mapOf(
+                                    "who" to "OLÀ ПРИВЕТ"
+                            ),
+                            "operationName" to "helloWho"
+                    )
+                },
+                // The response is to show that if we use another charset then it doesn't parse the passed characters
+                json = """
+                {
+                    "data": {
+                        "test":"Hello OLÃ ÐÐ ÐÐÐÐ¢"
+                    }
+                }
+                """
+        )
+    }
+
 })

@@ -45,16 +45,15 @@ private suspend fun parseRequest(call: ApplicationCall): GraphQLRequest {
 
 /**
  * Receive the request as String.
- * If there is no Content-Type in the HTTP header specified use ISO_8859_1 as default charset, see https://www.w3.org/International/articles/http-charset/index#charset.
- * But use UTF-8 as default charset for application/json, see https://tools.ietf.org/html/rfc4627#section-3
+ * This is a workaround for issue https://github.com/ktorio/ktor/issues/384.
+ *
+ * ktor defaults to ISO-8859-1 instead of UTF-8 for the encoding. This may cause issues
+ * for certain characters in the body. To overcome this we set the default to UTF-8 unless specified otherwise.
  */
 private suspend fun ApplicationCall.receiveTextWithCorrectEncoding(): String {
-    fun ContentType.defaultCharset(): Charset = when (this) {
-        ContentType.Application.Json -> Charsets.UTF_8
-        else -> Charsets.ISO_8859_1
-    }
+    val charset = request.contentCharset()
 
-    val contentType = request.contentType()
-    val suitableCharset = contentType.charset() ?: contentType.defaultCharset()
-    return receiveStream().bufferedReader(charset = suitableCharset).readText()
+    val body = receiveStream().readBytes().toString(charset ?: Charsets.UTF_8)
+
+    return body
 }
