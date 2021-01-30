@@ -1,5 +1,7 @@
 # Ktor Graphql
 
+[ ![Download](https://api.bintray.com/packages/excitement-engineer/ktor-graphql/ktor-graphql/images/download.svg) ](https://bintray.com/excitement-engineer/ktor-graphql/ktor-graphql/_latestVersion)
+
 Easily serve GraphQL over http together with Ktor.
 
 ## Installation: 
