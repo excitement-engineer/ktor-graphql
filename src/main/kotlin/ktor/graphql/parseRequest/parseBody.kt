@@ -17,7 +17,7 @@ internal fun parseBody(body: String, contentType: ContentType): GraphQLRequest {
         return GraphQLRequest()
     }
 
-    return when(contentType) {
+    return when(contentType.withoutParameters()) {
         graphQLContentType -> requestGraphQL(body)
         ContentType.Application.Json -> requestJson(body)
         else -> GraphQLRequest()

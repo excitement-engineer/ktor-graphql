@@ -255,31 +255,73 @@ object PostTest : Spek({
         )
     }
 
-    describe("supports POST raw text query with GET variable values") {
-
-        val query = """
+    val whoQuery = """
             query helloWho(${"$"}who: String){
                 test(who: ${"$"}who)
             }
         """.trimIndent()
+
+    describe("supports POST raw text query with GET variable values") {
 
         testResponse(
                 call = postRequest {
                     uri = urlString(
                             "variables" to """
                                 {
-                                    "who": "Dolly"
+                                    "who": "test OLÀ ПРИВЕТ"
                                 }
                             """,
                             "operationName" to "helloWho"
                     )
-                    setBody(query)
+                    setBody(whoQuery)
                     addHeader(HttpHeaders.ContentType, "application/graphql")
                 },
                 json = """
                 {
                     "data": {
-                        "test":"Hello Dolly"
+                        "test":"Hello test OLÀ ПРИВЕТ"
+                    }
+                }
+                """
+        )
+    }
+
+    describe("it uses the right encoding") {
+        testResponse(
+                call = postJSONRequest {
+                    setJsonBody("query" to whoQuery,
+                            "variables" to mapOf(
+                                    "who" to "OLÀ ПРИВЕТ"
+                            ),
+                            "operationName" to "helloWho"
+                    )
+                },
+                json = """
+                {
+                    "data": {
+                        "test":"Hello OLÀ ПРИВЕТ"
+                    }
+                }
+                """
+        )
+    }
+
+    describe("it allows for setting the encoding by the client") {
+        testResponse(
+                call = postRequest {
+                    addHeader(HttpHeaders.ContentType, "application/json; charset=${Charsets.ISO_8859_1}")
+                    setJsonBody("query" to whoQuery,
+                            "variables" to mapOf(
+                                    "who" to "OLÀ ПРИВЕТ"
+                            ),
+                            "operationName" to "helloWho"
+                    )
+                },
+                // The response is to show that if we use another charset then it doesn't parse the passed characters
+                json = """
+                {
+                    "data": {
+                        "test":"Hello OLÃ ÐÐ ÐÐÐÐ¢"
                     }
                 }
                 """
