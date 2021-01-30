@@ -17,7 +17,7 @@ repositories {
     jcenter()
 }
 
-val ktor_version = "1.3.2"
+val ktor_version = "1.5.1"
 val spek_version = "2.0.5"
 
 dependencies {
