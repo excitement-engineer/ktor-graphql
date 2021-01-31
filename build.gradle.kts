@@ -1,7 +1,7 @@
 import com.jfrog.bintray.gradle.BintrayExtension
 import java.util.Date
 
-val versionNo = "2.1.0"
+val versionNo = "2.0.1"
 group = "com.github.excitement-engineer"
 version = versionNo
 
