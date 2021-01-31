@@ -1,7 +1,7 @@
 import com.jfrog.bintray.gradle.BintrayExtension
 import java.util.Date
 
-val versionNo = "2.0.1"
+val versionNo = "2.0.2"
 group = "com.github.excitement-engineer"
 version = versionNo
 
@@ -39,6 +39,10 @@ dependencies {
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spek_version")
 }
 
+val sourcesJar by tasks.creating(Jar::class) {
+    archiveClassifier.set("sources")
+    from(sourceSets.main.get().allSource)
+}
 
 tasks {
     withType<Test> {
@@ -47,10 +51,6 @@ tasks {
         }
     }
 
-    val sourcesJar by creating(Jar::class) {
-        archiveClassifier.set("sources")
-        from(sourceSets.main.get().allSource)
-    }
 
     artifacts {
         archives(sourcesJar)
@@ -64,6 +64,7 @@ publishing {
     publications.invoke {
         create<MavenPublication>(publicationName) {
             from(components["java"])
+            artifact(sourcesJar)
         }
     }
 }
