@@ -18,7 +18,7 @@ repositories {
 }
 
 val ktor_version = "1.5.1"
-val spek_version = "2.0.5"
+val spek_version = "2.0.15"
 
 dependencies {
     compile("io.ktor:ktor-server-core:$ktor_version")
