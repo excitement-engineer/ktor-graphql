@@ -5,6 +5,8 @@ import io.ktor.application.ApplicationCall
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.utils.io.charsets.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ktor.graphql.HttpException
 import ktor.graphql.HttpGraphQLError
 import ktor.graphql.parseRequest.parseQueryString
@@ -42,7 +44,6 @@ private suspend fun parseRequest(call: ApplicationCall): GraphQLRequest {
     return GraphQLRequest(query = query, variables = variables, operationName = operationName)
 }
 
-
 /**
  * Receive the request as String.
  * This is a workaround for issue https://github.com/ktorio/ktor/issues/384.
@@ -51,9 +52,12 @@ private suspend fun parseRequest(call: ApplicationCall): GraphQLRequest {
  * for certain characters in the body. To overcome this we set the default to UTF-8 unless specified otherwise.
  */
 private suspend fun ApplicationCall.receiveTextWithCorrectEncoding(): String {
-    val charset = request.contentCharset()
 
-    val body = receiveStream().readBytes().toString(charset ?: Charsets.UTF_8)
+    // Need to prevent from blocking
+    return withContext(Dispatchers.IO) {
+        val charset = request.contentCharset()
 
-    return body
+        val body = receiveStream().readBytes().toString(charset ?: Charsets.UTF_8)
+        body
+    }
 }

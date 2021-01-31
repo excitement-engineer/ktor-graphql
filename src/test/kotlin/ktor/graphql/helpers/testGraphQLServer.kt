@@ -3,6 +3,8 @@ package ktor.graphql.helpers
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.routing.routing
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.util.pipeline.PipelineContext
 import ktor.graphql.GraphQLRequest
@@ -14,7 +16,6 @@ fun TestApplicationEngine.testGraphQLServer(
 ) = application.routing {
     graphQL(urlString(), schema, setup)
 }
-
 
 fun Application.testGraphQLRoute() {
     routing {
