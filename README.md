@@ -95,7 +95,7 @@ In order to pass a context when executing a query against the schema we can use 
  
 ```
 
-val graphQL = GraphQL.newGraphQL(schema).build()
+val graphQLExecutor = GraphQL.newGraphQL(schema).build()
 
 val server = embeddedServer(Netty, port = 8080) {
     routing {
@@ -108,7 +108,7 @@ val server = embeddedServer(Netty, port = 8080) {
                             .root(yourRootValue)
                             .build()
 
-                    graphQL.execute(input)
+                    graphQLExecutor.execute(input)
                 }
             )
         }
