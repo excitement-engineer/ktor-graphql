@@ -1,28 +1,53 @@
-## Release to Bintray
+## Release to Maven Central
 
-To release a new version on Bintray, first ensure all tests pass with,
-then bump the version in the `build.gradle` according to [semantic versioning](https://semver.org/_).
-
-Next, publish a release to Bintray using the following command:
+To release a new version to Maven Central make sure to set the credentials for OSSRH following gradle properties in `USER_HOME/.gradle/gradle.properties`
 
 ```
-./gradlew bintrayUpload -DBINTRAY_USER=<YOUR_USER_NAME> -DBINTRAY_API_KEY=<YOUR_API_KEY>
+mavenCentralRepositoryUsername=username
+mavenCentralRepositoryPassword=pass
 ```
 
-Alternatively you can create a `gradle.properties` file and specify the following properties: 
+Also set the keys for signing the jars in `USER_HOME/.gradle/gradle.properties`:
 
 ```
-bintrayUser=<YOUR_USER_NAME>
-bintrayApiKey=<YOUR_API_KEY>
+signing.keyId=3123213
+signing.password=123
+signing.secretKeyRingFile=/Users/user/.gnupg/secring.gpg
 ```
 
-And then you can run
+To create the keys download [GnuPG](https://www.gnupg.org/download/) and run commands:
 
 ```
-./gradlew bintrayUpload
+gpg --full-generate-key
+``` 
+
+Then export the keys to a file:
+
+```
+gpg --export-secret-keys -o /Users/user/.gnupg/secring.gpg
 ```
 
-Make sure to publish the release on bintray, it will initially be set as "unpublished".
+The key id is retrieved using:
+
+```
+gpg --list-keys --keyid-format short
+```
+
+Make sure to send the key to the key server:
+
+```
+gpg --send-keys --keyserver keyserver.ubuntu.com <KEY ID>
+```
+
+
+To publish to staging run the `publish` gradle task.
+
+Next login to the nexus [website](https://oss.sonatype.org) and close the repository.
+
+After closing it is staged and can be tested by adding the repository `https://oss.sonatype.org/content/repositories/staging/` 
+in the build.gradle. 
+
+Once it works then release it using the nexus website.
 
 Make sure to tag a release in git and update the release notes on Github. 
 
