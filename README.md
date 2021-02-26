@@ -1,12 +1,10 @@
 # Ktor Graphql
 
-[ ![Download](https://api.bintray.com/packages/excitement-engineer/ktor-graphql/ktor-graphql/images/download.svg) ](https://bintray.com/excitement-engineer/ktor-graphql/ktor-graphql/_latestVersion)
-
 Easily serve GraphQL over http together with Ktor.
 
 ## Installation: 
 
-This project is hosted on jCenter.
+This project is hosted on Maven Central (from version 2.0.3 onwards). See package [here](https://search.maven.org/artifact/com.github.excitement-engineer/ktor-graphql)
 
 Add dependency:
 
