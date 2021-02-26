@@ -12,6 +12,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 val ktor_version = "1.5.1"
