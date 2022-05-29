@@ -11,6 +11,8 @@ import ktor.graphql.helpers.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
+//<{"data":null,"errors":[{"message":"Variable 'value' has an invalid value : Expected type 'Boolean' but was 'ArrayList'.","locations":[{"line":1,"column":16}],"extensions":{"classification":"ValidationError"}}]}>
+//<{"data":null,"errors":[{"message":"Variable 'value' has an invalid value: Expected type 'Boolean' but was 'ArrayList'.","locations":[{"line":1,"column":16}],"extensions":{"classification":"ValidationError"}}]}>.
 object ErrorHandlingTest : Spek({
 
     describe("it catches errors from the setup function") {
@@ -303,7 +305,7 @@ object ErrorHandlingTest : Spek({
                 {
                     "data": null,
                     "errors": [{
-                        "message": "Variable 'value' has an invalid value : Expected type 'Boolean' but was 'ArrayList'.",
+                        "message": "Variable 'value' has an invalid value: Expected type 'Boolean' but was 'ArrayList'.",
                         "locations": [{
                             "line": 1,
                             "column": 16

@@ -1,9 +1,9 @@
 package ktor.graphql.parseRequest
 
 import ktor.graphql.GraphQLRequest
-import io.ktor.application.ApplicationCall
 import io.ktor.http.*
-import io.ktor.request.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.utils.io.charsets.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
