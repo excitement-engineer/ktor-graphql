@@ -11,18 +11,16 @@ import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
 import graphql.validation.Validator
-import io.ktor.application.ApplicationCall
-import io.ktor.application.call
 import io.ktor.http.ContentType
 import io.ktor.http.HeaderValue
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.acceptItems
-import io.ktor.request.httpMethod
-import io.ktor.response.header
-import io.ktor.response.respondText
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
 import io.ktor.util.pipeline.PipelineContext
 import ktor.graphql.parseRequest.parseGraphQLRequest
+import java.util.*
 
 internal class RequestHandler(
     private val schema: GraphQLSchema,
@@ -97,7 +95,6 @@ internal class RequestHandler(
         checkValidationErrors(document)
 
         val result = performRequest()
-
         validateResult(result)
 
         return ExecutionResultData(isDataPresent = true, result = result)
@@ -138,6 +135,7 @@ internal class RequestHandler(
             val executionInput = ExecutionInput.newExecutionInput()
                     .fromRequest(request)
                     .build()
+
 
             GraphQL.newGraphQL(schema)
                     .build()
@@ -195,7 +193,8 @@ internal class RequestHandler(
     }
 
     private fun checkValidationErrors(document: Document) {
-        val validationErrors = Validator().validateDocument(schema, document)
+        val validationErrors = Validator().validateDocument(schema, document, Locale.getDefault())
+
         if (validationErrors.isNotEmpty()) {
             throw HttpException(HttpStatusCode.BadRequest, validationErrors)
         }

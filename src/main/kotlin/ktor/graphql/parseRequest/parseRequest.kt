@@ -1,16 +1,15 @@
 package ktor.graphql.parseRequest
 
 import ktor.graphql.GraphQLRequest
-import io.ktor.application.ApplicationCall
 import io.ktor.http.*
-import io.ktor.request.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.utils.io.charsets.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ktor.graphql.HttpException
 import ktor.graphql.HttpGraphQLError
-import ktor.graphql.parseRequest.parseQueryString
-import kotlin.text.Charsets
+import java.nio.charset.StandardCharsets.UTF_8
 
 /**
  * See https://graphql.org/learn/serving-over-http/

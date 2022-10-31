@@ -88,7 +88,7 @@ object GetTest : Spek({
                     {
                       "errors": [
                         {
-                          "message": "Validation error of type FieldUndefined: Field 'unknownOne' in type 'Query' is undefined @ 'unknownOne'",
+                          "message": "Validation error (FieldUndefined@[unknownOne]) : Field 'unknownOne' in type 'Query' is undefined",
                           "locations": [
                             {
                               "line": 1,
@@ -100,7 +100,7 @@ object GetTest : Spek({
                           }
                         },
                         {
-                          "message": "Validation error of type FieldUndefined: Field 'unknownTwo' in type 'Query' is undefined @ 'unknownTwo'",
+                          "message": "Validation error (FieldUndefined@[unknownTwo]) : Field 'unknownTwo' in type 'Query' is undefined",
                           "locations": [
                             {
                               "line": 1,
