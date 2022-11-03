@@ -15,7 +15,7 @@ signing.password=123
 signing.secretKeyRingFile=/Users/user/.gnupg/secring.gpg
 ```
 
-To create the keys download [GnuPG](https://www.gnupg.org/download/) and run commands:
+To create the keys install [GnuPG](https://www.gnupg.org/download/) using `brew install gnupg`:
 
 ```
 gpg --full-generate-key
@@ -30,7 +30,7 @@ gpg --export-secret-keys -o /Users/user/.gnupg/secring.gpg
 The key id is retrieved using:
 
 ```
-gpg --list-keys --keyid-format short
+gpg --list-keys --keyid-format SHORT
 ```
 
 Make sure to send the key to the key server:
@@ -52,4 +52,16 @@ Once it works then release it using the nexus website.
 Make sure to tag a release in git and update the release notes on Github. 
 
 Once published, add [release notes](https://github.com/excitement-engineer/ktor-graphql/tags).
+
+### Testing locally
+
+To test locally run publishToMavenLocal and then in the project where you want to import it add mavenLocal to the repositories:
+
+
+```
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+```
 
