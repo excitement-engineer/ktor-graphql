@@ -45,23 +45,20 @@ To publish to staging run the `publish` gradle task.
 Next login to the nexus [website](https://oss.sonatype.org) and close the repository.
 
 After closing it is staged and can be tested by adding the repository `https://oss.sonatype.org/content/repositories/staging/` 
-in the build.gradle. 
-
-Once it works then release it using the nexus website.
-
-Make sure to tag a release in git and update the release notes on Github. 
-
-Once published, add [release notes](https://github.com/excitement-engineer/ktor-graphql/tags).
-
-### Testing locally
-
-To test locally run publishToMavenLocal and then in the project where you want to import it add mavenLocal to the repositories:
-
+in the build.gradle using:
 
 ```
 repositories {
     mavenCentral()
-    mavenLocal()
+    maven {
+        url = uri("https://...")
+    }
 }
 ```
+
+Once it works then release it using the nexus website by **closing** the staging.
+
+Make sure to tag a release in git and update the release notes on Github. 
+
+Once published, add [release notes](https://github.com/excitement-engineer/ktor-graphql/tags).
 
