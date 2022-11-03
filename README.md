@@ -1,6 +1,6 @@
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/excitement-engineer/ktor-graphql)
-
 # Ktor Graphql
+
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/excitement-engineer/ktor-graphql)
 
 Easily serve GraphQL over http together with Ktor.
 
